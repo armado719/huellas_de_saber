@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(if not exist public mkdir public)",
+      "Bash(if not exist publicimages mkdir publicimages)",
+      "Bash(dir \"C:\\proyecto\\huellas_de_saber\\public\\images\")",
+      "Bash(ren:*)",
+      "Bash(nul)",
+      "Bash(powershell -Command \"(Get-Content Estudiantes.tsx) -replace \"\"const niveles: Nivel\\[\\] = \\[''Caminadores'', ''Prejardín'', ''Jardín'', ''Transición''\\];\"\", \"\"const niveles: Nivel[] = [''Caminadores'', ''Párvulos'', ''Prejardín'', ''Jardín'', ''Transición''];\"\" | Set-Content Estudiantes.tsx\")",
+      "Bash(powershell -Command:*)",
+      "Bash(findstr:*)",
+      "Bash(node -e:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

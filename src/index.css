@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold py-2 px-4 rounded-lg transition-colors;
+  }
+
+  .btn-outline-red {
+    @apply border-2 border-secondary text-secondary hover:bg-secondary hover:text-white font-semibold py-2 px-4 rounded-lg transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-md p-6;
+  }
+
+  .card-highlight {
+    @apply bg-white rounded-xl shadow-md p-6 border-l-4 border-primary;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+
+  .badge-primary {
+    @apply px-3 py-1 bg-primary text-white rounded-full text-sm font-semibold;
+  }
+
+  .badge-secondary {
+    @apply px-3 py-1 bg-secondary text-white rounded-full text-sm font-semibold;
+  }
+
+  .alert-danger {
+    @apply bg-red-50 border-l-4 border-secondary text-gray-800 p-4 rounded-lg;
+  }
+
+  .alert-success {
+    @apply bg-green-50 border-l-4 border-primary text-gray-800 p-4 rounded-lg;
+  }
+
+  /* Modal System - Optimized for screen fit */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
+  }
+
+  .modal-container {
+    @apply bg-white rounded-xl shadow-2xl w-full border-4 border-primary flex flex-col;
+    max-height: 85vh;
+  }
+
+  .modal-container-lg {
+    @apply modal-container;
+    max-width: 1200px;
+  }
+
+  .modal-container-md {
+    @apply modal-container;
+    max-width: 900px;
+  }
+
+  .modal-container-sm {
+    @apply modal-container;
+    max-width: 600px;
+  }
+
+  .modal-header {
+    @apply bg-primary text-white p-4 flex justify-between items-center rounded-t-lg flex-shrink-0;
+  }
+
+  .modal-header h2 {
+    @apply text-xl font-bold drop-shadow-lg;
+  }
+
+  .modal-header p {
+    @apply text-sm opacity-90 mt-1;
+  }
+
+  .modal-body {
+    @apply p-4 overflow-y-auto flex-1;
+  }
+
+  .modal-body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .modal-body::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded;
+  }
+
+  .modal-body::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded hover:bg-gray-400;
+  }
+
+  .modal-footer {
+    @apply p-4 border-t flex-shrink-0 bg-white rounded-b-lg;
+  }
+
+  .modal-tabs {
+    @apply bg-gray-50 border-b border-gray-200 px-4 flex-shrink-0;
+  }
+
+  .modal-tabs-list {
+    @apply flex space-x-1 overflow-x-auto;
+  }
+
+  .modal-tab {
+    @apply px-3 py-2 font-medium text-sm whitespace-nowrap transition-colors flex items-center space-x-2;
+  }
+
+  .modal-tab-active {
+    @apply text-primary border-b-2 border-primary bg-white;
+  }
+
+  .modal-tab-inactive {
+    @apply text-gray-600 hover:text-gray-800 hover:bg-gray-100;
+  }
+
+  /* Compact form styles for modals */
+  .form-section {
+    @apply space-y-3;
+  }
+
+  .form-section-title {
+    @apply text-base font-bold text-gray-800 mb-3 pb-2 border-b-2 border-primary;
+  }
+
+  .form-grid {
+    @apply grid gap-3;
+  }
+
+  .form-grid-2 {
+    @apply form-grid grid-cols-1 md:grid-cols-2;
+  }
+
+  .form-grid-3 {
+    @apply form-grid grid-cols-1 md:grid-cols-3;
+  }
+
+  .input-compact {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm;
+  }
+
+  .label-compact {
+    @apply block text-xs font-medium text-gray-700 mb-1;
+  }
+
+  .textarea-compact {
+    @apply input-compact resize-none;
+    min-height: 60px;
+  }
+
+  /* Responsive modal adjustments */
+  @media (max-width: 768px) {
+    .modal-container-lg,
+    .modal-container-md,
+    .modal-container-sm {
+      max-width: 95%;
+      max-height: 90vh;
+    }
+
+    .modal-header {
+      @apply p-3;
+    }
+
+    .modal-body {
+      @apply p-3;
+    }
+
+    .modal-footer {
+      @apply p-3;
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .modal-container-lg {
+      max-width: 85%;
+    }
+  }
+}
