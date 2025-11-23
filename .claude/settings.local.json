@@ -12,7 +12,8 @@
       "Bash(powershell -Command \"(Get-Content Estudiantes.tsx) -replace \"\"const niveles: Nivel\\[\\] = \\[''Caminadores'', ''Prejardín'', ''Jardín'', ''Transición''\\];\"\", \"\"const niveles: Nivel[] = [''Caminadores'', ''Párvulos'', ''Prejardín'', ''Jardín'', ''Transición''];\"\" | Set-Content Estudiantes.tsx\")",
       "Bash(powershell -Command:*)",
       "Bash(findstr:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

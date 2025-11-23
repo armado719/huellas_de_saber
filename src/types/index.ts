@@ -190,45 +190,112 @@ export interface Boletin {
   observacionesGenerales?: string;
 }
 
+export type TipoActividad = 'Académica' | 'Artística' | 'Física' | 'Descanso' | 'Almuerzo' | 'Otro';
+export type DiaSemana = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes';
+
 export interface Horario {
   id: string;
   nivel: Nivel;
-  diaSemana: number;
+  diaSemana: number; // 1-5 (Lunes-Viernes)
+  diaSemanaTexto?: DiaSemana;
   horaInicio: string;
   horaFin: string;
   materia: string;
+  tipoActividad?: TipoActividad;
   profesorId: string;
+  aula?: string;
+  color?: string;
+  observaciones?: string;
 }
+
+export type TipoEvento = 'Festivo' | 'Reunión' | 'Actividad' | 'Evaluación' | 'Ceremonia' | 'Otro';
+export type PrioridadEvento = 'Normal' | 'Importante' | 'Urgente';
 
 export interface EventoCalendario {
   id: string;
   titulo: string;
   descripcion: string;
   fecha: string;
-  tipo: 'academico' | 'festivo' | 'reunion' | 'otro';
+  fechaFin?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  tipo: TipoEvento;
+  lugar?: string;
   niveles?: Nivel[];
+  responsableId?: string;
+  prioridad?: PrioridadEvento;
+  enviarRecordatorio?: boolean;
 }
+
+export type PrioridadMensaje = 'Normal' | 'Importante' | 'Urgente';
+export type EstadoMensaje = 'Enviado' | 'Entregado' | 'Leído' | 'No Entregado';
 
 export interface Mensaje {
   id: string;
   remitenteId: string;
-  destinatarioId: string;
+  destinatarioId: string | string[]; // Puede ser un array para múltiples destinatarios
   asunto: string;
   contenido: string;
   fecha: string;
   leido: boolean;
+  importante?: boolean;
+  prioridad?: PrioridadMensaje;
+  estado?: EstadoMensaje;
+  tieneAdjunto?: boolean;
+  respondidoA?: string; // ID del mensaje al que se responde
+  borrador?: boolean;
+}
+
+export type EstadoPago = 'pendiente' | 'pagado' | 'vencido' | 'parcial';
+export type MetodoPago = 'Efectivo' | 'Transferencia Bancaria' | 'Tarjeta de Crédito' | 'Tarjeta de Débito' | 'Cheque' | 'Otro';
+export type ConceptoPago =
+  | 'Matrícula'
+  | 'Pensión'
+  | 'Materiales Didácticos'
+  | 'Uniforme Escolar'
+  | 'Transporte Escolar'
+  | 'Alimentación'
+  | 'Seguro Estudiantil'
+  | 'Salida Pedagógica'
+  | 'Certificados'
+  | 'Actividades Extracurriculares'
+  | 'Otro';
+export type MesPension = 'Enero' | 'Febrero' | 'Marzo' | 'Abril' | 'Mayo' | 'Junio' | 'Julio' | 'Agosto' | 'Septiembre' | 'Octubre' | 'Noviembre' | 'Diciembre';
+
+export interface Abono {
+  id: string;
+  pagoId: string;
+  fecha: string;
+  monto: number;
+  metodoPago: MetodoPago;
+  numeroReferencia?: string;
+  observaciones?: string;
+  numeroRecibo: string;
 }
 
 export interface Pago {
   id: string;
+  numeroRecibo: string;
   estudianteId: string;
-  concepto: string;
+  concepto: ConceptoPago;
+  descripcionConcepto?: string;
   monto: number;
+  montoPagado?: number;
+  saldoPendiente?: number;
   fechaVencimiento: string;
   fechaPago?: string;
-  estado: 'pendiente' | 'pagado' | 'vencido';
+  estado: EstadoPago;
   periodo?: Periodo;
+  mes?: MesPension;
   año: number;
+  metodoPago?: MetodoPago;
+  numeroReferencia?: string;
+  observaciones?: string;
+  abonos?: Abono[];
+  descuento?: number;
+  motivoDescuento?: string;
+  generarRecibo?: boolean;
+  enviarEmail?: boolean;
 }
 
 export interface RecursoEducativo {

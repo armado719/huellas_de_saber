@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { mockMensajes } from '../data/mockData';
 import {
   LayoutDashboard,
   Users,
@@ -34,6 +35,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Calcular mensajes no leídos
+  const mensajesNoLeidos = useMemo(() => {
+    const normalizarDestinatario = (destinatarioId: string | string[]): string[] => {
+      return Array.isArray(destinatarioId) ? destinatarioId : [destinatarioId];
+    };
+
+    return mockMensajes.filter((m) => {
+      const destinatarios = normalizarDestinatario(m.destinatarioId);
+      return destinatarios.includes(user?.id || '1') && !m.leido;
+    }).length;
+  }, [user]);
 
   const menuItems: MenuItem[] = [
     {
@@ -173,6 +186,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="flex items-center space-x-3">
                       {item.icon}
                       <span className="font-medium">{item.label}</span>
+                      {item.path === '/mensajes' && mensajesNoLeidos > 0 && (
+                        <span
+                          className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full ${
+                            isActive
+                              ? 'bg-secondary text-white'
+                              : 'bg-secondary text-white'
+                          }`}
+                        >
+                          {mensajesNoLeidos}
+                        </span>
+                      )}
                     </div>
                     {isActive && <ChevronRight className="w-4 h-4" />}
                   </Link>
