@@ -298,16 +298,40 @@ export interface Pago {
   enviarEmail?: boolean;
 }
 
+export type TipoRecurso = 'documento' | 'video' | 'presentacion' | 'imagen' | 'enlace' | 'plantilla';
+export type CategoriaRecurso =
+  | 'Lenguaje y Comunicación'
+  | 'Matemáticas'
+  | 'Ciencias Naturales'
+  | 'Ciencias Sociales'
+  | 'Inglés'
+  | 'Música'
+  | 'Arte y Creatividad'
+  | 'Educación Física'
+  | 'Tecnología e Informática'
+  | 'Valores y Ética'
+  | 'Guías para Profesores'
+  | 'Documentos Administrativos';
+
 export interface RecursoEducativo {
   id: string;
   titulo: string;
   descripcion: string;
-  tipo: 'documento' | 'video' | 'imagen' | 'link';
+  tipo: TipoRecurso;
   url: string;
-  nivel: Nivel;
+  nivel: Nivel | 'Todos los niveles' | 'Solo Profesores';
   materia: string;
+  categoria: CategoriaRecurso;
   profesorId: string;
   fechaSubida: string;
+  tamaño?: string; // "2.5 MB", "1.8 MB", etc.
+  descargas?: number;
+  visualizaciones?: number;
+  destacado?: boolean;
+  nuevo?: boolean;
+  etiquetas?: string[];
+  visibleProfesores?: boolean;
+  visiblePadres?: boolean;
 }
 
 export interface Estadisticas {

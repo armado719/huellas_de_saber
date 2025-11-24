@@ -47,6 +47,7 @@ const Pagos: React.FC = () => {
   const [estadoFiltro, setEstadoFiltro] = useState<string>('');
   const [conceptoFiltro, setConceptoFiltro] = useState<string>('');
   const [mesFiltro, setMesFiltro] = useState<string>('');
+  const [nivelFiltro, setNivelFiltro] = useState<string>('');
   const [estudianteFiltro, setEstudianteFiltro] = useState<string>('');
 
   // Paginación y ordenamiento
@@ -80,6 +81,7 @@ const Pagos: React.FC = () => {
     enviarEmail: false,
   });
   const [tipoPago, setTipoPago] = useState<'completo' | 'parcial'>('completo');
+  const [nivelFormulario, setNivelFormulario] = useState<string>('');
 
   // ========== FUNCIONES AUXILIARES ==========
   const getEstudianteNombre = (estudianteId: string) => {
@@ -162,6 +164,12 @@ const Pagos: React.FC = () => {
     if (mesFiltro) {
       resultado = resultado.filter((p) => p.mes === mesFiltro);
     }
+    if (nivelFiltro) {
+      resultado = resultado.filter((p) => {
+        const estudiante = getEstudiante(p.estudianteId);
+        return estudiante && estudiante.nivel === nivelFiltro;
+      });
+    }
     if (estudianteFiltro) {
       resultado = resultado.filter((p) => p.estudianteId === estudianteFiltro);
     }
@@ -208,6 +216,7 @@ const Pagos: React.FC = () => {
     estadoFiltro,
     conceptoFiltro,
     mesFiltro,
+    nivelFiltro,
     estudianteFiltro,
     campoOrden,
     tipoOrden,
@@ -266,8 +275,27 @@ const Pagos: React.FC = () => {
     setShowDetalle(true);
   };
 
+  const handleCerrarModalNuevoPago = () => {
+    setShowNuevoPago(false);
+    setNivelFormulario('');
+    setNuevoPago({
+      estudianteId: '',
+      concepto: 'Pensión',
+      monto: 0,
+      estado: 'pendiente',
+      año: 2024,
+      generarRecibo: true,
+      enviarEmail: false,
+    });
+    setTipoPago('completo');
+  };
+
   const handleRegistrarPago = () => {
     // Validaciones
+    if (!nivelFormulario) {
+      alert('Debe seleccionar un nivel educativo');
+      return;
+    }
     if (!nuevoPago.estudianteId) {
       alert('Debe seleccionar un estudiante');
       return;
@@ -342,6 +370,7 @@ const Pagos: React.FC = () => {
       enviarEmail: false,
     });
     setTipoPago('completo');
+    setNivelFormulario('');
     mostrarConfirmacion('Pago registrado exitosamente ✓');
   };
 
@@ -524,6 +553,7 @@ const Pagos: React.FC = () => {
     setEstadoFiltro('');
     setConceptoFiltro('');
     setMesFiltro('');
+    setNivelFiltro('');
     setEstudianteFiltro('');
     setPaginaActual(1);
   };
@@ -730,12 +760,38 @@ const Pagos: React.FC = () => {
             </select>
           </div>
 
+          {/* Nivel */}
+          <div>
+            <label className="label">Nivel</label>
+            <select
+              value={nivelFiltro}
+              onChange={(e) => setNivelFiltro(e.target.value)}
+              className="input-field"
+            >
+              <option value="">Todos los niveles</option>
+              <option value="Caminadores">Caminadores</option>
+              <option value="Párvulos">Párvulos</option>
+              <option value="Prejardín">Prejardín</option>
+              <option value="Jardín">Jardín</option>
+              <option value="Transición">Transición</option>
+            </select>
+          </div>
+
           {/* Estudiante */}
           <div>
             <label className="label">Estudiante</label>
             <select
               value={estudianteFiltro}
-              onChange={(e) => setEstudianteFiltro(e.target.value)}
+              onChange={(e) => {
+                setEstudianteFiltro(e.target.value);
+                // Auto-actualizar el filtro de nivel al seleccionar un estudiante
+                if (e.target.value) {
+                  const estudiante = getEstudiante(e.target.value);
+                  if (estudiante) {
+                    setNivelFiltro(estudiante.nivel);
+                  }
+                }
+              }}
               className="input-field"
             >
               <option value="">Todos</option>
@@ -756,6 +812,7 @@ const Pagos: React.FC = () => {
             estadoFiltro ||
             conceptoFiltro ||
             mesFiltro ||
+            nivelFiltro ||
             estudianteFiltro) && (
             <button onClick={limpiarFiltros} className="btn-outline text-sm">
               <X className="w-4 h-4 inline mr-1" />
@@ -1042,7 +1099,7 @@ const Pagos: React.FC = () => {
             <div className="modal-header">
               <h2 className="text-xl font-bold">Registrar Nuevo Pago</h2>
               <button
-                onClick={() => setShowNuevoPago(false)}
+                onClick={handleCerrarModalNuevoPago}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X className="w-6 h-6" />
@@ -1051,6 +1108,29 @@ const Pagos: React.FC = () => {
 
             <div className="modal-body">
               <div className="space-y-4">
+                {/* Nivel */}
+                <div>
+                  <label className="label">Nivel *</label>
+                  <select
+                    value={nivelFormulario}
+                    onChange={(e) => {
+                      setNivelFormulario(e.target.value);
+                      // Resetear estudiante si cambia el nivel
+                      setNuevoPago({ ...nuevoPago, estudianteId: '' });
+                    }}
+                    className="input-field"
+                  >
+                    <option value="" disabled>
+                      Seleccione nivel...
+                    </option>
+                    <option value="Caminadores">Caminadores</option>
+                    <option value="Párvulos">Párvulos</option>
+                    <option value="Prejardín">Prejardín</option>
+                    <option value="Jardín">Jardín</option>
+                    <option value="Transición">Transición</option>
+                  </select>
+                </div>
+
                 {/* Estudiante */}
                 <div>
                   <label className="label">Estudiante *</label>
@@ -1060,13 +1140,22 @@ const Pagos: React.FC = () => {
                       setNuevoPago({ ...nuevoPago, estudianteId: e.target.value })
                     }
                     className="input-field"
+                    disabled={!nivelFormulario}
                   >
-                    <option value="">Seleccione un estudiante</option>
-                    {mockEstudiantes.map((est) => (
-                      <option key={est.id} value={est.id}>
-                        {est.nombres} {est.apellidos} ({est.id}) - {est.nivel}
-                      </option>
-                    ))}
+                    {!nivelFormulario ? (
+                      <option value="">Primero seleccione un nivel</option>
+                    ) : (
+                      <>
+                        <option value="">Seleccione un estudiante</option>
+                        {mockEstudiantes
+                          .filter((est) => est.nivel === nivelFormulario)
+                          .map((est) => (
+                            <option key={est.id} value={est.id}>
+                              {est.nombres} {est.apellidos} - {est.nivel} - {est.id}
+                            </option>
+                          ))}
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -1359,7 +1448,7 @@ const Pagos: React.FC = () => {
             </div>
 
             <div className="modal-footer">
-              <button onClick={() => setShowNuevoPago(false)} className="btn-outline">
+              <button onClick={handleCerrarModalNuevoPago} className="btn-outline">
                 Cancelar
               </button>
               <button onClick={handleRegistrarPago} className="btn-primary">
