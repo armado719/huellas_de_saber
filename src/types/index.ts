@@ -224,7 +224,7 @@ export const DATOS_COLEGIO: DatosInstitucionales = {
   ciudad: 'Neiva',
   departamento: 'Huila',
   telefono: '3167927255',
-  email: '[email protected]',
+  email: 'g.p.huellasdelsaber@gmail.com',
 };
 
 export type TipoActividad = 'Académica' | 'Artística' | 'Física' | 'Descanso' | 'Almuerzo' | 'Otro';
