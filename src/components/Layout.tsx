@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { mockMensajes } from '../data/mockData';
+import { DATOS_COLEGIO } from '../types';
+import Footer from './Footer';
 import {
   LayoutDashboard,
   Users,
@@ -140,7 +142,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <h1 className="text-lg font-bold text-white drop-shadow-md">
                   Huellas Del Saber
                 </h1>
-                <p className="text-xs text-white/90">Sistema de Gestión</p>
+                <p className="text-xs text-white/90">
+                  NIT: {DATOS_COLEGIO.nit} | Tel: {DATOS_COLEGIO.telefono}
+                </p>
               </div>
             </div>
           </div>
@@ -209,11 +213,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <main
-        className={`pt-20 transition-all duration-300 ${
+        className={`pt-20 pb-0 transition-all duration-300 ${
           sidebarOpen ? 'ml-64' : 'ml-0'
         }`}
       >
-        <div className="p-6">{children}</div>
+        <div className="p-6 min-h-[calc(100vh-280px)]">{children}</div>
+        <Footer />
       </main>
     </div>
   );

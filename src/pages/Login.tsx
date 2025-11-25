@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { DATOS_COLEGIO } from '../types';
 import { GraduationCap, Lock, Mail, AlertCircle } from 'lucide-react';
 
 const Login: React.FC = () => {
@@ -40,8 +41,7 @@ const Login: React.FC = () => {
               />
             </div>
           </div>
-          <h1 className="text-2xl font-bold mb-2 drop-shadow-lg">Gimnasio Pedagógico</h1>
-          <h2 className="text-xl font-semibold drop-shadow-lg">Huellas Del Saber</h2>
+          <h1 className="text-2xl font-bold mb-2 drop-shadow-lg">{DATOS_COLEGIO.nombreCompleto}</h1>
           <p className="text-sm mt-2 opacity-90">Sistema de Gestión Escolar</p>
         </div>
 
@@ -104,9 +104,13 @@ const Login: React.FC = () => {
           </div>
         </form>
 
-        <div className="bg-gray-50 px-8 py-4 text-center text-xs text-gray-600">
-          <p>Calle 24A #34 Bis-35, Neiva, Colombia</p>
-          <p className="mt-1">Tel: 316 7927255</p>
+        <div className="bg-gray-50 px-8 py-6 text-center text-xs text-gray-700">
+          <p className="font-semibold text-sm mb-2">{DATOS_COLEGIO.nombreCompleto}</p>
+          <p className="mb-1">NIT: {DATOS_COLEGIO.nit}</p>
+          <p className="mb-1">{DATOS_COLEGIO.direccion}</p>
+          <p className="mb-1">{DATOS_COLEGIO.ciudad}, {DATOS_COLEGIO.departamento}</p>
+          <p className="mb-1">Tel: {DATOS_COLEGIO.telefono}</p>
+          <p>{DATOS_COLEGIO.email}</p>
         </div>
       </div>
     </div>

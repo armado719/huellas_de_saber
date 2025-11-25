@@ -35,6 +35,7 @@ import {
   MesPension,
   EstadoPago,
   Abono,
+  DATOS_COLEGIO,
 } from '../types';
 
 type TipoOrden = 'asc' | 'desc';
@@ -387,9 +388,11 @@ const Pagos: React.FC = () => {
 
     reciboHTML.innerHTML = `
       <div style="text-align: center; border-bottom: 3px solid #008751; padding-bottom: 20px; margin-bottom: 20px;">
-        <h1 style="color: #008751; margin: 0;">GIMNASIO PEDAGÓGICO HUELLAS DEL SABER</h1>
-        <p style="margin: 5px 0; font-size: 14px;">Calle 24A #34 Bis-35, Neiva, Colombia</p>
-        <p style="margin: 5px 0; font-size: 14px;">Tel: 316 7927255 | NIT: 900.123.456-7</p>
+        <h1 style="color: #008751; margin: 0; font-size: 20px;">${DATOS_COLEGIO.nombreCompleto}</h1>
+        <p style="margin: 5px 0; font-size: 13px; font-weight: 600;">NIT: ${DATOS_COLEGIO.nit}</p>
+        <p style="margin: 5px 0; font-size: 13px;">${DATOS_COLEGIO.direccion}</p>
+        <p style="margin: 5px 0; font-size: 13px;">Tel: ${DATOS_COLEGIO.telefono} | Email: ${DATOS_COLEGIO.email}</p>
+        <p style="margin: 5px 0; font-size: 13px;">${DATOS_COLEGIO.ciudad}, ${DATOS_COLEGIO.departamento} - Colombia</p>
       </div>
 
       <div style="text-align: center; margin: 30px 0;">

@@ -177,18 +177,55 @@ export interface Calificacion {
   fechaRegistro: string;
 }
 
+// Tipos para Competencias del Boletín
+export interface Competencia {
+  id: string;
+  texto: string;
+  valoracion: Valoracion;
+}
+
+export interface DimensionBoletin {
+  nombre: string;
+  competencias: Competencia[];
+}
+
 export interface Boletin {
   estudiante: Estudiante;
   periodo: Periodo;
   año: number;
-  calificaciones: CalificacionDetalle[];
+  fecha: string; // Formato: "DD de mes de YYYY"
+  maestra?: string; // Nombre del profesor
+  dimensiones?: DimensionBoletin[]; // Nuevo formato con competencias
+  calificaciones: CalificacionDetalle[]; // Formato anterior (mantener compatibilidad)
   asistencias: {
     total: number;
     presentes: number;
     ausentes: number;
+    porcentaje: number;
   };
   observacionesGenerales?: string;
 }
+
+// Datos institucionales del colegio
+export interface DatosInstitucionales {
+  nombreCompleto: string;
+  nit: string;
+  direccion: string;
+  ciudad: string;
+  departamento: string;
+  telefono: string;
+  email: string;
+}
+
+export const DATOS_COLEGIO: DatosInstitucionales = {
+  nombreCompleto: 'GIMNASIO PEDAGÓGICO HUELLAS DEL SABER',
+  nit: '80774075-9',
+  direccion: 'Calle 24A No 34Bis-35 B/ALAMEDA MONTERREY',
+  ciudad: 'Neiva',
+  departamento: 'Huila',
+  telefono: '3167927255',
+  email: '[email protected]',
+};
 
 export type TipoActividad = 'Académica' | 'Artística' | 'Física' | 'Descanso' | 'Almuerzo' | 'Otro';
 export type DiaSemana = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes';
