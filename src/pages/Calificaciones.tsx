@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   GraduationCap,
   Save,
   Search,
   X,
 } from 'lucide-react';
-import { mockEstudiantes, mockCalificaciones } from '../data/mockData';
+import { estudiantesService } from '../services/estudiantesService';
+import { calificacionesService } from '../services/calificacionesService';
 import { Calificacion, CalificacionDetalle, Dimension, Nivel, Periodo, Valoracion } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -17,7 +18,28 @@ const Calificaciones: React.FC = () => {
   const [añoSeleccionado, setAñoSeleccionado] = useState(2024);
   const [showModal, setShowModal] = useState(false);
   const [estudianteSeleccionado, setEstudianteSeleccionado] = useState<string | null>(null);
-  const [calificaciones, setCalificaciones] = useState<Calificacion[]>(mockCalificaciones);
+  const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
+  const [estudiantes, setEstudiantes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const estudiantesData = await estudiantesService.getAll();
+      setEstudiantes(estudiantesData);
+    } catch (err) {
+      console.error('Error al cargar datos:', err);
+      setError('Error al cargar los datos. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
   const dimensiones: Dimension[] = [
@@ -29,7 +51,7 @@ const Calificaciones: React.FC = () => {
     'Ética',
   ];
 
-  const estudiantesDelNivel = mockEstudiantes.filter(
+  const estudiantesDelNivel = estudiantes.filter(
     (est) =>
       est.nivel === nivelSeleccionado &&
       est.activo &&
@@ -268,7 +290,7 @@ const CalificacionModal: React.FC<CalificacionModalProps> = ({
   onSave,
   userId,
 }) => {
-  const estudiante = mockEstudiantes.find((e) => e.id === estudianteId);
+  const estudiante = estudiantes.find((e) => e.id === estudianteId);
   const dimensiones: Dimension[] = [
     'Cognitiva',
     'Comunicativa',

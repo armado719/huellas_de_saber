@@ -1,48 +1,71 @@
-import React, { useState } from 'react';
 import {
-  UserCheck,
-  Search,
-  Plus,
+  AlertCircle,
+  Briefcase,
+  ChevronRight,
   Edit,
-  Trash2,
   Eye,
-  X,
+  GraduationCap,
   Mail,
   Phone,
+  Plus,
   Save,
+  Search,
+  Trash2,
   Upload,
-  GraduationCap,
-  Briefcase,
   User,
+  UserCheck,
+  X,
 } from 'lucide-react';
-import { mockProfesores } from '../data/mockData';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { profesoresService } from '../services/profesoresService';
 import {
-  Profesor,
-  Nivel,
-  TipoIdentificacionProfesor,
-  NivelEducacion,
-  TipoContrato,
   EstadoProfesor,
   Genero,
+  Nivel,
+  NivelEducacion,
+  Profesor,
+  TipoContrato,
+  TipoIdentificacionProfesor,
 } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 
 const Profesores: React.FC = () => {
-  const [profesores, setProfesores] = useState<Profesor[]>(mockProfesores);
+  const [profesores, setProfesores] = useState<Profesor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedProfesor, setSelectedProfesor] = useState<Profesor | null>(null);
 
+  // Cargar profesores al montar el componente
+  useEffect(() => {
+    cargarProfesores();
+  }, []);
+
+  const cargarProfesores = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const datos = await profesoresService.getAll();
+      setProfesores(datos);
+    } catch (err) {
+      console.error('Error al cargar profesores:', err);
+      setError('Error al cargar los profesores. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredProfesores = profesores.filter((prof) => {
     const matchesSearch =
-      prof.nombres.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      prof.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      prof.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      prof.especialidad.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (prof.codigo && prof.codigo.toLowerCase().includes(searchTerm.toLowerCase()));
+      prof.nombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prof.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prof.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prof.especialidad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prof.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch && prof.activo;
+    return matchesSearch && prof.estado === 'Activo';
   });
 
   const handleCreate = () => {
@@ -63,9 +86,15 @@ const Profesores: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('¿Está seguro de eliminar este profesor?')) {
-      setProfesores(profesores.map(p => p.id === id ? { ...p, activo: false } : p));
+      try {
+        await profesoresService.delete(id);
+        await cargarProfesores(); // Recargar la lista
+      } catch (err) {
+        console.error('Error al eliminar profesor:', err);
+        alert('Error al eliminar el profesor. Por favor, intente nuevamente.');
+      }
     }
   };
 
@@ -117,9 +146,27 @@ const Profesores: React.FC = () => {
         />
       </div>
 
+      {/* Indicadores de Loading y Error */}
+      {loading && (
+        <div className="card text-center py-8">
+          <p className="text-gray-600">Cargando profesores...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="card text-center py-8 bg-red-50">
+          <p className="text-red-600">{error}</p>
+          <button onClick={cargarProfesores} className="btn-primary mt-4">
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Grid de Profesores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProfesores.map((profesor) => (
+      {!loading && !error && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProfesores.map((profesor) => (
           <div key={profesor.id} className="card hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -211,15 +258,17 @@ const Profesores: React.FC = () => {
                 </button>
               </div>
             </div>
+            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {filteredProfesores.length === 0 && (
-        <div className="card text-center py-12">
-          <UserCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No se encontraron profesores</p>
-        </div>
+          {filteredProfesores.length === 0 && (
+            <div className="card text-center py-12">
+              <UserCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No se encontraron profesores</p>
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal */}
@@ -229,15 +278,21 @@ const Profesores: React.FC = () => {
           profesor={selectedProfesor}
           profesores={profesores}
           onClose={() => setShowModal(false)}
-          onSave={(profesor) => {
-            if (modalMode === 'create') {
-              setProfesores([...profesores, profesor]);
-            } else if (modalMode === 'edit') {
-              setProfesores(
-                profesores.map((p) => (p.id === profesor.id ? profesor : p))
-              );
+          onSave={async (profesor) => {
+            try {
+              if (modalMode === 'create') {
+                // Eliminar ID falso generado en frontend - el backend genera el real
+                const { id, ...profesorData } = profesor;
+                await profesoresService.create(profesorData);
+              } else if (modalMode === 'edit' && profesor.id) {
+                await profesoresService.update(profesor.id, profesor);
+              }
+              await cargarProfesores(); // Recargar la lista
+              setShowModal(false);
+            } catch (err) {
+              console.error('Error al guardar profesor:', err);
+              alert('Error al guardar el profesor. Por favor, intente nuevamente.');
             }
-            setShowModal(false);
           }}
         />
       )}
@@ -264,6 +319,9 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
   const isAdmin = user?.rol === 'admin';
   const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
   const [activeTab, setActiveTab] = useState<'personal' | 'formacion' | 'laboral'>('personal');
+  
+  // Estado para manejar errores de validación
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const generateCodigo = () => {
     const maxCodigo = profesores
@@ -273,22 +331,48 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
     return `PROF${String(maxCodigo + 1).padStart(3, '0')}`;
   };
 
-  const [formData, setFormData] = useState<Profesor>(
-    profesor || {
-      id: `prof${Date.now()}`,
-      codigo: generateCodigo(),
-      nombres: '',
-      apellidos: '',
-      email: '',
-      telefono: '',
-      especialidad: '',
-      activo: true,
-      fechaIngreso: new Date().toISOString().split('T')[0],
-      niveles: [],
-      estado: 'Activo',
-      ciudad: 'Neiva',
+  const [formData, setFormData] = useState<Profesor>({
+    id: `prof${Date.now()}`,
+    codigo: generateCodigo(),
+    nombres: '',
+    apellidos: '',
+    email: '',
+    telefono: '',
+    especialidad: '',
+    activo: true,
+    fechaIngreso: new Date().toISOString().split('T')[0],
+    niveles: [],
+    estado: 'Activo',
+    ciudad: 'Neiva',
+  });
+
+  // Actualizar formData cuando cambie el profesor (para modo editar/ver)
+  useEffect(() => {
+    if (profesor) {
+      setFormData({
+        ...profesor,
+        // Convertir fechas a formato YYYY-MM-DD para inputs type="date"
+        fechaNacimiento: profesor.fechaNacimiento?.split('T')[0] || '',
+        fechaIngreso: profesor.fechaIngreso?.split('T')[0] || '',
+      });
+    } else {
+      // Resetear al formulario vacío para modo crear
+      setFormData({
+        id: `prof${Date.now()}`,
+        codigo: generateCodigo(),
+        nombres: '',
+        apellidos: '',
+        email: '',
+        telefono: '',
+        especialidad: '',
+        activo: true,
+        fechaIngreso: new Date().toISOString().split('T')[0],
+        niveles: [],
+        estado: 'Activo',
+        ciudad: 'Neiva',
+      });
     }
-  );
+  }, [profesor]);
 
   const calcularEdad = (fechaNacimiento?: string) => {
     if (!fechaNacimiento) return 0;
@@ -302,36 +386,159 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
     return edad;
   };
 
+  // Validar campos obligatorios del tab actual
+  const validateCurrentTab = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    switch (activeTab) {
+      case 'personal':
+        if (!formData.nombres) {
+          newErrors.nombres = 'Los nombres son obligatorios';
+        }
+        if (!formData.apellidos) {
+          newErrors.apellidos = 'Los apellidos son obligatorios';
+        }
+        if (!formData.tipoIdentificacion) {
+          newErrors.tipoIdentificacion = 'El tipo de identificación es obligatorio';
+        }
+        if (!formData.numeroIdentificacion) {
+          newErrors.numeroIdentificacion = 'El número de identificación es obligatorio';
+        }
+        if (!formData.fechaNacimiento) {
+          newErrors.fechaNacimiento = 'La fecha de nacimiento es obligatoria';
+        }
+        if (!formData.genero) {
+          newErrors.genero = 'Debe seleccionar el género';
+        }
+        if (!formData.telefono) {
+          newErrors.telefono = 'El teléfono móvil es obligatorio';
+        }
+        if (!formData.email) {
+          newErrors.email = 'El email institucional es obligatorio';
+        }
+        break;
+      case 'formacion':
+        if (!formData.nivelEducacion) {
+          newErrors.nivelEducacion = 'El nivel de educación es obligatorio';
+        }
+        break;
+      case 'laboral':
+        if (!formData.tipoContrato) {
+          newErrors.tipoContrato = 'El tipo de contrato es obligatorio';
+        }
+        if (formData.niveles.length === 0) {
+          newErrors.niveles = 'Debe seleccionar al menos un nivel asignado';
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Avanzar al siguiente tab
+  const handleContinue = () => {
+    if (!validateCurrentTab()) {
+      return;
+    }
+
+    // Limpiar errores del tab actual al avanzar exitosamente
+    const tabErrors: string[] = [];
+    switch (activeTab) {
+      case 'personal':
+        tabErrors.push('nombres', 'apellidos', 'tipoIdentificacion', 'numeroIdentificacion', 'fechaNacimiento', 'genero', 'telefono', 'email');
+        break;
+      case 'formacion':
+        tabErrors.push('nivelEducacion');
+        break;
+      case 'laboral':
+        tabErrors.push('tipoContrato', 'niveles');
+        break;
+    }
+    
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      tabErrors.forEach(key => delete newErrors[key]);
+      return newErrors;
+    });
+
+    const tabOrder: Array<'personal' | 'formacion' | 'laboral'> = [
+      'personal',
+      'formacion',
+      'laboral',
+    ];
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex < tabOrder.length - 1) {
+      setActiveTab(tabOrder[currentIndex + 1]);
+    }
+  };
+
+  // Volver al tab anterior
+  const handleBack = () => {
+    const tabOrder: Array<'personal' | 'formacion' | 'laboral'> = [
+      'personal',
+      'formacion',
+      'laboral',
+    ];
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabOrder[currentIndex - 1]);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validaciones
-    if (!formData.nombres || !formData.apellidos) {
-      alert('Nombres y Apellidos son obligatorios');
-      return;
+    // Validar todos los campos obligatorios
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.nombres) {
+      newErrors.nombres = 'Los nombres son obligatorios';
     }
-    if (!formData.tipoIdentificacion || !formData.numeroIdentificacion) {
-      alert('Tipo y Número de Identificación son obligatorios');
-      return;
+    if (!formData.apellidos) {
+      newErrors.apellidos = 'Los apellidos son obligatorios';
     }
-    if (!formData.fechaNacimiento || !formData.genero) {
-      alert('Fecha de Nacimiento y Género son obligatorios');
-      return;
+    if (!formData.tipoIdentificacion) {
+      newErrors.tipoIdentificacion = 'El tipo de identificación es obligatorio';
     }
-    if (!formData.telefono || !formData.email) {
-      alert('Teléfono Móvil y Email Institucional son obligatorios');
-      return;
+    if (!formData.numeroIdentificacion) {
+      newErrors.numeroIdentificacion = 'El número de identificación es obligatorio';
+    }
+    if (!formData.fechaNacimiento) {
+      newErrors.fechaNacimiento = 'La fecha de nacimiento es obligatoria';
+    }
+    if (!formData.genero) {
+      newErrors.genero = 'Debe seleccionar el género';
+    }
+    if (!formData.telefono) {
+      newErrors.telefono = 'El teléfono móvil es obligatorio';
+    }
+    if (!formData.email) {
+      newErrors.email = 'El email institucional es obligatorio';
     }
     if (!formData.nivelEducacion) {
-      alert('Nivel de Educación es obligatorio');
-      return;
+      newErrors.nivelEducacion = 'El nivel de educación es obligatorio';
     }
     if (!formData.tipoContrato) {
-      alert('Tipo de Contrato es obligatorio');
-      return;
+      newErrors.tipoContrato = 'El tipo de contrato es obligatorio';
     }
     if (formData.niveles.length === 0) {
-      alert('Debe seleccionar al menos un Nivel Asignado');
+      newErrors.niveles = 'Debe seleccionar al menos un nivel asignado';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // Ir al primer tab con errores
+      if (newErrors.nombres || newErrors.apellidos || newErrors.tipoIdentificacion || 
+          newErrors.numeroIdentificacion || newErrors.fechaNacimiento || newErrors.genero ||
+          newErrors.telefono || newErrors.email) {
+        setActiveTab('personal');
+      } else if (newErrors.nivelEducacion) {
+        setActiveTab('formacion');
+      } else if (newErrors.tipoContrato || newErrors.niveles) {
+        setActiveTab('laboral');
+      }
       return;
     }
 
@@ -339,15 +546,21 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
   };
 
   const toggleNivel = (nivel: Nivel) => {
-    if (formData.niveles.includes(nivel)) {
-      setFormData({
-        ...formData,
-        niveles: formData.niveles.filter((n) => n !== nivel),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        niveles: [...formData.niveles, nivel],
+    const newNiveles = formData.niveles.includes(nivel)
+      ? formData.niveles.filter((n) => n !== nivel)
+      : [...formData.niveles, nivel];
+    
+    setFormData({
+      ...formData,
+      niveles: newNiveles,
+    });
+
+    // Limpiar error de niveles si ya hay al menos uno seleccionado
+    if (newNiveles.length > 0 && errors.niveles) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.niveles;
+        return newErrors;
       });
     }
   };
@@ -435,11 +648,26 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     <input
                       type="text"
                       value={formData.nombres}
-                      onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData({ ...formData, nombres: e.target.value });
+                        if (errors.nombres) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.nombres;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.nombres ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       required
                       disabled={isViewMode}
                     />
+                    {errors.nombres && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.nombres}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label-compact">
@@ -448,11 +676,26 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     <input
                       type="text"
                       value={formData.apellidos}
-                      onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData({ ...formData, apellidos: e.target.value });
+                        if (errors.apellidos) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.apellidos;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.apellidos ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       required
                       disabled={isViewMode}
                     />
+                    {errors.apellidos && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.apellidos}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label-compact">
@@ -460,10 +703,17 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     </label>
                     <select
                       value={formData.tipoIdentificacion || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, tipoIdentificacion: e.target.value as TipoIdentificacionProfesor })
-                      }
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData({ ...formData, tipoIdentificacion: e.target.value as TipoIdentificacionProfesor });
+                        if (errors.tipoIdentificacion) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.tipoIdentificacion;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.tipoIdentificacion ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       disabled={isViewMode}
                     >
                       <option value="">Seleccione...</option>
@@ -472,6 +722,12 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                       <option value="TI">TI - Tarjeta de Identidad</option>
                       <option value="Pasaporte">Pasaporte</option>
                     </select>
+                    {errors.tipoIdentificacion && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.tipoIdentificacion}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label-compact">
@@ -480,10 +736,27 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     <input
                       type="text"
                       value={formData.numeroIdentificacion || ''}
-                      onChange={(e) => setFormData({ ...formData, numeroIdentificacion: e.target.value })}
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, numeroIdentificacion: e.target.value }));
+                        if (errors.numeroIdentificacion) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.numeroIdentificacion;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.numeroIdentificacion ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       disabled={isViewMode}
+                      required
+                      placeholder="Ingrese el número de identificación"
                     />
+                    {errors.numeroIdentificacion && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.numeroIdentificacion}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label-compact">
@@ -492,10 +765,25 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     <input
                       type="date"
                       value={formData.fechaNacimiento || ''}
-                      onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData({ ...formData, fechaNacimiento: e.target.value });
+                        if (errors.fechaNacimiento) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.fechaNacimiento;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.fechaNacimiento ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       disabled={isViewMode}
                     />
+                    {errors.fechaNacimiento && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.fechaNacimiento}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label-compact">Edad (calculada)</label>
@@ -517,7 +805,16 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                           name="genero"
                           value="Masculino"
                           checked={formData.genero === 'Masculino'}
-                          onChange={(e) => setFormData({ ...formData, genero: e.target.value as Genero })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, genero: e.target.value as Genero });
+                            if (errors.genero) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.genero;
+                                return newErrors;
+                              });
+                            }
+                          }}
                           className="mr-2 w-4 h-4 text-primary"
                           disabled={isViewMode}
                         />
@@ -529,13 +826,28 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                           name="genero"
                           value="Femenino"
                           checked={formData.genero === 'Femenino'}
-                          onChange={(e) => setFormData({ ...formData, genero: e.target.value as Genero })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, genero: e.target.value as Genero });
+                            if (errors.genero) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.genero;
+                                return newErrors;
+                              });
+                            }
+                          }}
                           className="mr-2 w-4 h-4 text-primary"
                           disabled={isViewMode}
                         />
                         <span className="text-sm text-gray-700">Femenino</span>
                       </label>
                     </div>
+                    {errors.genero && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.genero}
+                      </p>
+                    )}
                   </div>
                   <div className="md:col-span-3">
                     <label className="label-compact">
@@ -601,11 +913,26 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     <input
                       type="tel"
                       value={formData.telefono}
-                      onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData({ ...formData, telefono: e.target.value });
+                        if (errors.telefono) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.telefono;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.telefono ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       required
                       disabled={isViewMode}
                     />
+                    {errors.telefono && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.telefono}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label-compact">
@@ -614,11 +941,26 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value });
+                        if (errors.email) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.email;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       required
                       disabled={isViewMode}
                     />
+                    {errors.email && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="label-compact">Email Personal (opcional)</label>
@@ -677,8 +1019,17 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                   </label>
                   <select
                     value={formData.nivelEducacion || ''}
-                    onChange={(e) => setFormData({ ...formData, nivelEducacion: e.target.value as NivelEducacion })}
-                    className="input-compact"
+                    onChange={(e) => {
+                      setFormData({ ...formData, nivelEducacion: e.target.value as NivelEducacion });
+                      if (errors.nivelEducacion) {
+                        setErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.nivelEducacion;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={`input-compact ${errors.nivelEducacion ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                     disabled={isViewMode}
                   >
                     <option value="">Seleccione...</option>
@@ -689,6 +1040,12 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     <option value="Maestría">Maestría</option>
                     <option value="Doctorado">Doctorado</option>
                   </select>
+                  {errors.nivelEducacion && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.nivelEducacion}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="label-compact">Título Profesional</label>
@@ -777,8 +1134,17 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                     </label>
                     <select
                       value={formData.tipoContrato || ''}
-                      onChange={(e) => setFormData({ ...formData, tipoContrato: e.target.value as TipoContrato })}
-                      className="input-compact"
+                      onChange={(e) => {
+                        setFormData({ ...formData, tipoContrato: e.target.value as TipoContrato });
+                        if (errors.tipoContrato) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.tipoContrato;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`input-compact ${errors.tipoContrato ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       disabled={isViewMode}
                     >
                       <option value="">Seleccione...</option>
@@ -786,6 +1152,12 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                       <option value="Fijo">Fijo</option>
                       <option value="Prestación de Servicios">Prestación de Servicios</option>
                     </select>
+                    {errors.tipoContrato && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.tipoContrato}
+                      </p>
+                    )}
                   </div>
                   {isAdmin && (
                     <div>
@@ -843,7 +1215,9 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="label-compact">Niveles Asignados (seleccione al menos uno)</label>
+                    <label className="label-compact">
+                      Niveles Asignados <span className="text-secondary">*</span>
+                    </label>
                     <div className="grid grid-cols-2 gap-2">
                       {niveles.map((nivel) => (
                         <label
@@ -865,6 +1239,12 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                         </label>
                       ))}
                     </div>
+                    {errors.niveles && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {errors.niveles}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="flex items-center cursor-pointer">
@@ -902,9 +1282,28 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
         <div className="modal-footer">
           {!isViewMode ? (
             <div className="flex justify-between items-center">
-              <p className="text-xs text-gray-600">
-                <span className="text-secondary">*</span> Campos obligatorios
-              </p>
+              <div className="flex items-center space-x-2">
+                <p className="text-xs text-gray-600">
+                  <span className="text-secondary">*</span> Campos obligatorios
+                </p>
+                {/* Indicador de progreso */}
+                <div className="flex items-center space-x-1">
+                  {tabs.map((tab, index) => {
+                    const currentIndex = tabs.findIndex(t => t.id === activeTab);
+                    const isCompleted = index < currentIndex;
+                    const isCurrent = index === currentIndex;
+                    return (
+                      <div
+                        key={tab.id}
+                        className={`w-2 h-2 rounded-full ${
+                          isCompleted || isCurrent ? 'bg-primary' : 'bg-gray-300'
+                        }`}
+                        title={tab.label}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
               <div className="flex space-x-2">
                 <button
                   type="button"
@@ -913,14 +1312,34 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  onClick={handleSubmit}
-                  className="btn-primary flex items-center text-sm py-2 px-4"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {mode === 'create' ? 'Crear Profesor' : 'Guardar Cambios'}
-                </button>
+                {activeTab !== 'personal' && (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+                  >
+                    Atrás
+                  </button>
+                )}
+                {activeTab === 'laboral' ? (
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    className="btn-primary flex items-center text-sm py-2 px-4"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {mode === 'create' ? 'Crear Profesor' : 'Guardar Cambios'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleContinue}
+                    className="btn-primary flex items-center text-sm py-2 px-4"
+                  >
+                    Continuar
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </button>
+                )}
               </div>
             </div>
           ) : (

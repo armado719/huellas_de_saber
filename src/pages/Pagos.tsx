@@ -1,41 +1,40 @@
-import React, { useState, useMemo } from 'react';
-import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
-  CreditCard,
-  Search,
-  Filter,
-  CheckCircle,
-  XCircle,
   AlertCircle,
-  Clock,
-  Plus,
-  Eye,
-  Printer,
-  Download,
-  Send,
-  FileText,
-  TrendingUp,
-  X,
+  AlertTriangle,
+  ArrowUpDown,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
-  Mail,
+  Clock,
+  CreditCard,
   DollarSign,
-  Calendar,
+  Download,
+  Eye,
+  FileText,
+  Info,
+  Mail,
+  Plus,
+  Printer,
   Receipt,
-  AlertTriangle,
+  Search,
+  Send,
+  TrendingUp,
+  X,
+  XCircle
 } from 'lucide-react';
-import { mockPagos, mockEstudiantes } from '../data/mockData';
+import React, { useEffect, useMemo, useState } from 'react';
+import { estudiantesService } from '../services/estudiantesService';
+import { pagosService } from '../services/pagosService';
 import {
-  Pago,
-  Estudiante,
   ConceptoPago,
-  MetodoPago,
-  MesPension,
-  EstadoPago,
-  Abono,
   DATOS_COLEGIO,
+  EstadoPago,
+  Estudiante,
+  MesPension,
+  MetodoPago,
+  Pago
 } from '../types';
 
 type TipoOrden = 'asc' | 'desc';
@@ -43,13 +42,39 @@ type CampoOrden = 'estudiante' | 'concepto' | 'monto' | 'fechaVencimiento' | 'es
 
 const Pagos: React.FC = () => {
   // ========== ESTADOS ==========
-  const [pagos, setPagos] = useState<Pago[]>(mockPagos);
+  const [pagos, setPagos] = useState<Pago[]>([]);
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState<string>('');
   const [conceptoFiltro, setConceptoFiltro] = useState<string>('');
   const [mesFiltro, setMesFiltro] = useState<string>('');
   const [nivelFiltro, setNivelFiltro] = useState<string>('');
   const [estudianteFiltro, setEstudianteFiltro] = useState<string>('');
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [pagosData, estudiantesData] = await Promise.all([
+        pagosService.getAll(),
+        estudiantesService.getAll(),
+      ]);
+      setPagos(pagosData);
+      setEstudiantes(estudiantesData);
+    } catch (err) {
+      console.error('Error al cargar datos de pagos:', err);
+      setError('Error al cargar los datos. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Paginación y ordenamiento
   const [paginaActual, setPaginaActual] = useState(1);
@@ -71,6 +96,17 @@ const Pagos: React.FC = () => {
   const [showConfirmacion, setShowConfirmacion] = useState(false);
   const [mensajeConfirmacion, setMensajeConfirmacion] = useState('');
 
+  // Notificaciones (error o info)
+  const [notificacion, setNotificacion] = useState<{
+    tipo: 'error' | 'info';
+    mensaje: string;
+    visible: boolean;
+  }>({
+    tipo: 'info',
+    mensaje: '',
+    visible: false,
+  });
+
   // Formulario nuevo pago
   const [nuevoPago, setNuevoPago] = useState<Partial<Pago>>({
     estudianteId: '',
@@ -86,12 +122,12 @@ const Pagos: React.FC = () => {
 
   // ========== FUNCIONES AUXILIARES ==========
   const getEstudianteNombre = (estudianteId: string) => {
-    const estudiante = mockEstudiantes.find((e) => e.id === estudianteId);
+    const estudiante = estudiantes.find((e) => e.id === estudianteId);
     return estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : 'N/A';
   };
 
   const getEstudiante = (estudianteId: string): Estudiante | undefined => {
-    return mockEstudiantes.find((e) => e.id === estudianteId);
+    return estudiantes.find((e) => e.id === estudianteId);
   };
 
   const formatearMoneda = (monto: number) => {
@@ -291,88 +327,114 @@ const Pagos: React.FC = () => {
     setTipoPago('completo');
   };
 
-  const handleRegistrarPago = () => {
+  const handleRegistrarPago = async () => {
     // Validaciones
     if (!nivelFormulario) {
-      alert('Debe seleccionar un nivel educativo');
+      mostrarNotificacion('error', 'Debe seleccionar un nivel educativo');
       return;
     }
     if (!nuevoPago.estudianteId) {
-      alert('Debe seleccionar un estudiante');
+      mostrarNotificacion('error', 'Debe seleccionar un estudiante');
       return;
     }
     if (!nuevoPago.monto || nuevoPago.monto <= 0) {
-      alert('El monto debe ser mayor a cero');
+      mostrarNotificacion('error', 'El monto debe ser mayor a cero');
       return;
     }
     if (!nuevoPago.fechaVencimiento) {
-      alert('Debe especificar una fecha de vencimiento');
+      mostrarNotificacion('error', 'Debe especificar una fecha de vencimiento');
       return;
     }
 
-    const numeroRecibo = `REC-2024-${String(pagos.length + 1).padStart(3, '0')}`;
+    try {
+      setLoading(true);
+      setError(null);
 
-    const pago: Pago = {
-      id: `pago${Date.now()}`,
-      numeroRecibo,
-      estudianteId: nuevoPago.estudianteId,
-      concepto: nuevoPago.concepto as ConceptoPago,
-      descripcionConcepto: nuevoPago.descripcionConcepto,
-      monto: nuevoPago.monto,
-      montoPagado:
-        tipoPago === 'parcial' && nuevoPago.montoPagado
-          ? nuevoPago.montoPagado
-          : tipoPago === 'completo'
-          ? nuevoPago.monto
-          : 0,
-      saldoPendiente:
-        tipoPago === 'parcial' && nuevoPago.montoPagado
-          ? nuevoPago.monto - nuevoPago.montoPagado
-          : 0,
-      fechaVencimiento: nuevoPago.fechaVencimiento!,
-      fechaPago: tipoPago === 'completo' ? nuevoPago.fechaPago : undefined,
-      estado:
-        tipoPago === 'completo'
-          ? 'pagado'
-          : tipoPago === 'parcial'
-          ? 'parcial'
-          : 'pendiente',
-      periodo: nuevoPago.periodo,
-      mes: nuevoPago.mes,
-      año: nuevoPago.año || 2024,
-      metodoPago: nuevoPago.metodoPago,
-      numeroReferencia: nuevoPago.numeroReferencia,
-      observaciones: nuevoPago.observaciones,
-      abonos:
-        tipoPago === 'parcial' && nuevoPago.montoPagado
-          ? [
-              {
-                id: `abn${Date.now()}`,
-                pagoId: `pago${Date.now()}`,
-                fecha: nuevoPago.fechaPago || new Date().toISOString().split('T')[0],
-                monto: nuevoPago.montoPagado,
-                metodoPago: nuevoPago.metodoPago as MetodoPago,
-                numeroReferencia: nuevoPago.numeroReferencia,
-                numeroRecibo: `ABON-${String(Date.now()).slice(-3)}`,
-              },
-            ]
-          : [],
-    };
+      const numeroRecibo = `REC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
 
-    setPagos([...pagos, pago]);
-    setShowNuevoPago(false);
-    setNuevoPago({
-      estudianteId: '',
-      concepto: 'Pensión',
-      monto: 0,
-      estado: 'pendiente',
-      año: 2024,
-      generarRecibo: true,
-      enviarEmail: false,
-    });
-    setTipoPago('completo');
-    setNivelFormulario('');
-    mostrarConfirmacion('Pago registrado exitosamente ✓');
+      // Preparar el objeto pago para enviar al backend (sin id, sin abonos)
+      // Convertir undefined a null para campos opcionales
+      // NOTA: generarRecibo y enviarEmail son solo para el frontend, no se envían al backend
+      const pagoParaGuardar: any = {
+        numeroRecibo,
+        estudianteId: nuevoPago.estudianteId,
+        concepto: nuevoPago.concepto as ConceptoPago,
+        descripcionConcepto: nuevoPago.descripcionConcepto || null,
+        monto: nuevoPago.monto,
+        montoPagado:
+          tipoPago === 'parcial' && nuevoPago.montoPagado
+            ? nuevoPago.montoPagado
+            : tipoPago === 'completo'
+            ? nuevoPago.monto
+            : 0,
+        saldoPendiente:
+          tipoPago === 'parcial' && nuevoPago.montoPagado
+            ? nuevoPago.monto - nuevoPago.montoPagado
+            : tipoPago === 'completo'
+            ? 0
+            : nuevoPago.monto,
+        fechaVencimiento: nuevoPago.fechaVencimiento!,
+        fechaPago: tipoPago === 'completo' && nuevoPago.fechaPago ? nuevoPago.fechaPago : null,
+        estado:
+          tipoPago === 'completo'
+            ? 'pagado'
+            : tipoPago === 'parcial'
+            ? 'parcial'
+            : 'pendiente',
+        periodo: nuevoPago.periodo || null,
+        mes: nuevoPago.mes || null,
+        año: nuevoPago.año || new Date().getFullYear(),
+        metodoPago: nuevoPago.metodoPago || null,
+        numeroReferencia: nuevoPago.numeroReferencia || null,
+        observaciones: nuevoPago.observaciones || null,
+        // generarRecibo y enviarEmail no se envían al backend, son solo para el frontend
+      };
+
+      // Guardar en la base de datos
+      console.log('Datos del pago a guardar:', pagoParaGuardar);
+      const pagoGuardado = await pagosService.create(pagoParaGuardar);
+
+      // Si es un pago parcial y tiene monto pagado, registrar el abono
+      if (tipoPago === 'parcial' && nuevoPago.montoPagado && nuevoPago.montoPagado > 0) {
+        try {
+          await pagosService.registrarAbono(pagoGuardado.id, {
+            fecha: nuevoPago.fechaPago || new Date().toISOString().split('T')[0],
+            monto: nuevoPago.montoPagado,
+            metodoPago: nuevoPago.metodoPago as MetodoPago,
+            numeroReferencia: nuevoPago.numeroReferencia,
+            numeroRecibo: `ABON-${String(Date.now()).slice(-6)}`,
+          });
+        } catch (abonoError) {
+          console.error('Error al registrar abono:', abonoError);
+          // Continuar aunque falle el abono, el pago ya se guardó
+        }
+      }
+
+      // Recargar los datos desde la base de datos
+      await cargarDatos();
+
+      // Cerrar modal y limpiar formulario
+      setShowNuevoPago(false);
+      setNuevoPago({
+        estudianteId: '',
+        concepto: 'Pensión',
+        monto: 0,
+        estado: 'pendiente',
+        año: new Date().getFullYear(),
+        generarRecibo: true,
+        enviarEmail: false,
+      });
+      setTipoPago('completo');
+      setNivelFormulario('');
+      mostrarConfirmacion('Pago registrado exitosamente ✓');
+    } catch (err: any) {
+      console.error('Error al registrar pago:', err);
+      const errorMessage = err.message || 'Error al registrar el pago. Por favor, intente nuevamente.';
+      setError(errorMessage);
+      mostrarNotificacion('error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleImprimirRecibo = (pago: Pago) => {
@@ -544,7 +606,7 @@ const Pagos: React.FC = () => {
     );
 
     if (pagosParaRecordar.length === 0) {
-      alert('No hay pagos pendientes o vencidos para enviar recordatorios');
+      mostrarNotificacion('info', 'No hay pagos pendientes o vencidos para enviar recordatorios');
       return;
     }
 
@@ -565,6 +627,18 @@ const Pagos: React.FC = () => {
     setMensajeConfirmacion(mensaje);
     setShowConfirmacion(true);
     setTimeout(() => setShowConfirmacion(false), 3000);
+  };
+
+  const mostrarNotificacion = (tipo: 'error' | 'info', mensaje: string) => {
+    setNotificacion({
+      tipo,
+      mensaje,
+      visible: true,
+    });
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+      setNotificacion((prev) => ({ ...prev, visible: false }));
+    }, 5000);
   };
 
   const conceptos: ConceptoPago[] = [
@@ -634,7 +708,7 @@ const Pagos: React.FC = () => {
         </div>
       </div>
 
-      {/* Notificación */}
+      {/* Notificación de Confirmación */}
       {showConfirmacion && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
           <CheckCircle className="w-5 h-5" />
@@ -642,7 +716,78 @@ const Pagos: React.FC = () => {
         </div>
       )}
 
+      {/* Notificación de Error/Info */}
+      {notificacion.visible && (
+        <div
+          className={`fixed top-4 right-4 z-50 card shadow-lg flex items-start gap-3 animate-fade-in ${
+            notificacion.tipo === 'error'
+              ? 'border-l-4 border-red-500 bg-red-50'
+              : 'border-l-4 border-blue-500 bg-blue-50'
+          }`}
+          style={{ 
+            maxWidth: '500px', 
+            minWidth: '300px',
+            top: showConfirmacion ? '80px' : '16px'
+          }}
+        >
+          <div className="flex-shrink-0 mt-0.5">
+            {notificacion.tipo === 'error' ? (
+              <XCircle className="w-6 h-6 text-red-600" />
+            ) : (
+              <Info className="w-6 h-6 text-blue-600" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3
+              className={`font-semibold mb-1 ${
+                notificacion.tipo === 'error' ? 'text-red-800' : 'text-blue-800'
+              }`}
+            >
+              {notificacion.tipo === 'error' ? 'Error' : 'Información'}
+            </h3>
+            <p
+              className={`text-sm ${
+                notificacion.tipo === 'error' ? 'text-red-700' : 'text-blue-700'
+              }`}
+            >
+              {notificacion.mensaje}
+            </p>
+          </div>
+          <button
+            onClick={() =>
+              setNotificacion((prev) => ({ ...prev, visible: false }))
+            }
+            className={`flex-shrink-0 p-1 rounded hover:bg-opacity-20 ${
+              notificacion.tipo === 'error'
+                ? 'text-red-600 hover:bg-red-200'
+                : 'text-blue-600 hover:bg-blue-200'
+            } transition-colors`}
+            aria-label="Cerrar notificación"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Indicadores de Loading y Error */}
+      {loading && (
+        <div className="card text-center py-8">
+          <p className="text-gray-600">Cargando pagos...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="card text-center py-8 bg-red-50">
+          <p className="text-red-600">{error}</p>
+          <button onClick={cargarDatos} className="btn-primary mt-4">
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Estadísticas */}
+      {!loading && !error && (
+      <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
@@ -798,7 +943,7 @@ const Pagos: React.FC = () => {
               className="input-field"
             >
               <option value="">Todos</option>
-              {mockEstudiantes.map((est) => (
+              {estudiantes.map((est) => (
                 <option key={est.id} value={est.id}>
                   {est.nombres} {est.apellidos}
                 </option>
@@ -1150,7 +1295,7 @@ const Pagos: React.FC = () => {
                     ) : (
                       <>
                         <option value="">Seleccione un estudiante</option>
-                        {mockEstudiantes
+                        {estudiantes
                           .filter((est) => est.nivel === nivelFormulario)
                           .map((est) => (
                             <option key={est.id} value={est.id}>
@@ -1920,6 +2065,8 @@ Gimnasio Pedagógico Huellas Del Saber`}
           font-size: 0.875rem;
         }
       `}</style>
+      </>
+      )}
     </div>
   );
 };

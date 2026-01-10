@@ -1,31 +1,35 @@
-import React, { useState } from 'react';
 import {
-  Users,
-  Search,
-  Plus,
+  AlertCircle,
+  ChevronRight,
   Edit,
-  Trash2,
   Eye,
-  X,
-  UserPlus,
-  Save,
-  Upload,
   Info,
+  Plus,
+  Save,
+  Search,
+  Trash2,
+  Upload,
+  UserPlus,
+  Users,
+  X,
 } from 'lucide-react';
-import { mockEstudiantes } from '../data/mockData';
+import React, { useEffect, useState } from 'react';
+import { estudiantesService } from '../services/estudiantesService';
 import {
-  Estudiante,
   Acudiente,
+  EstadoEstudiante,
+  Estudiante,
+  Genero,
   Nivel,
+  TipoAcudiente,
   TipoIdentificacion,
   TipoSangre,
-  Genero,
-  EstadoEstudiante,
-  TipoAcudiente,
 } from '../types';
 
 const Estudiantes: React.FC = () => {
-  const [estudiantes, setEstudiantes] = useState<Estudiante[]>(mockEstudiantes);
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNivel, setSelectedNivel] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
@@ -33,6 +37,25 @@ const Estudiantes: React.FC = () => {
   const [selectedEstudiante, setSelectedEstudiante] = useState<Estudiante | null>(null);
 
   const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
+
+  // Cargar estudiantes al montar el componente
+  useEffect(() => {
+    cargarEstudiantes();
+  }, []);
+
+  const cargarEstudiantes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const datos = await estudiantesService.getAll();
+      setEstudiantes(datos);
+    } catch (err) {
+      console.error('Error al cargar estudiantes:', err);
+      setError('Error al cargar los estudiantes. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredEstudiantes = estudiantes.filter((est) => {
     const matchesSearch =
@@ -64,9 +87,15 @@ const Estudiantes: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('¿Está seguro de eliminar este estudiante?')) {
-      setEstudiantes(estudiantes.map(e => e.id === id ? { ...e, activo: false } : e));
+      try {
+        await estudiantesService.delete(id);
+        await cargarEstudiantes(); // Recargar la lista
+      } catch (err) {
+        console.error('Error al eliminar estudiante:', err);
+        alert('Error al eliminar el estudiante. Por favor, intente nuevamente.');
+      }
     }
   };
 
@@ -133,22 +162,39 @@ const Estudiantes: React.FC = () => {
         </div>
       </div>
 
+      {/* Indicadores de Loading y Error */}
+      {loading && (
+        <div className="card text-center py-8">
+          <p className="text-gray-600">Cargando estudiantes...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="card text-center py-8 bg-red-50">
+          <p className="text-red-600">{error}</p>
+          <button onClick={cargarEstudiantes} className="btn-primary mt-4">
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Tabla de Estudiantes */}
-      <div className="card overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b-2 border-gray-200">
-              <th className="text-left py-3 px-4">Código</th>
-              <th className="text-left py-3 px-4">Nombre Completo</th>
-              <th className="text-left py-3 px-4">Edad</th>
-              <th className="text-left py-3 px-4">Nivel</th>
-              <th className="text-left py-3 px-4">Acudientes</th>
-              <th className="text-left py-3 px-4">Estado</th>
-              <th className="text-center py-3 px-4">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEstudiantes.map((estudiante) => (
+      {!loading && !error && (
+        <div className="card overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b-2 border-gray-200">
+                <th className="text-left py-3 px-4">Código</th>
+                <th className="text-left py-3 px-4">Nombre Completo</th>
+                <th className="text-left py-3 px-4">Edad</th>
+                <th className="text-left py-3 px-4">Nivel</th>
+                <th className="text-left py-3 px-4">Acudientes</th>
+                <th className="text-left py-3 px-4">Estado</th>
+                <th className="text-center py-3 px-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEstudiantes.map((estudiante) => (
               <tr
                 key={estudiante.id}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
@@ -226,6 +272,7 @@ const Estudiantes: React.FC = () => {
           </div>
         )}
       </div>
+      )}
 
       {/* Modal */}
       {showModal && (
@@ -234,17 +281,21 @@ const Estudiantes: React.FC = () => {
           estudiante={selectedEstudiante}
           estudiantes={estudiantes}
           onClose={() => setShowModal(false)}
-          onSave={(estudiante) => {
-            if (modalMode === 'create') {
-              setEstudiantes([...estudiantes, estudiante]);
-            } else if (modalMode === 'edit') {
-              setEstudiantes(
-                estudiantes.map((e) =>
-                  e.id === estudiante.id ? estudiante : e
-                )
-              );
+          onSave={async (estudiante) => {
+            try {
+              if (modalMode === 'create') {
+                // Eliminar el campo 'id' antes de enviarlo al backend
+                const { id, ...estudianteData } = estudiante;
+                await estudiantesService.create(estudianteData);
+              } else if (modalMode === 'edit' && estudiante.id) {
+                await estudiantesService.update(estudiante.id, estudiante);
+              }
+              await cargarEstudiantes(); // Recargar la lista
+              setShowModal(false);
+            } catch (err) {
+              console.error('Error al guardar estudiante:', err);
+              alert('Error al guardar el estudiante. Por favor, intente nuevamente.');
             }
-            setShowModal(false);
           }}
         />
       )}
@@ -295,6 +346,36 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
     }
   );
 
+  // Actualizar formData cuando cambie el estudiante (para modo editar/ver)
+  useEffect(() => {
+    if (estudiante) {
+      setFormData({
+        ...estudiante,
+        // Mapeo explícito de fechas (soporta tanto snake_case como camelCase)
+        // Convertir a formato YYYY-MM-DD para inputs type="date"
+        fechaNacimiento: ((estudiante as any).fecha_nacimiento || estudiante.fechaNacimiento || '')?.split('T')[0] || '',
+        fechaIngreso: ((estudiante as any).fecha_ingreso || estudiante.fechaIngreso || '')?.split('T')[0] || '',
+        fechaMatricula: ((estudiante as any).fecha_matricula || estudiante.fechaMatricula || '')?.split('T')[0] || '',
+      });
+    } else {
+      // Resetear al formulario vacío para modo crear
+      setFormData({
+        id: `est${Date.now()}`,
+        codigo: generateCodigo(),
+        nombres: '',
+        apellidos: '',
+        fechaNacimiento: '',
+        genero: undefined,
+        nivel: 'Caminadores',
+        estado: 'Activo',
+        activo: true,
+        fechaIngreso: new Date().toISOString().split('T')[0],
+        fechaMatricula: new Date().toISOString().split('T')[0],
+        acudientes: [],
+      });
+    }
+  }, [estudiante]);
+
   const [showAcudienteForm, setShowAcudienteForm] = useState(false);
   const [editingAcudiente, setEditingAcudiente] = useState<Acudiente | null>(null);
   const [acudienteData, setAcudienteData] = useState<Acudiente>({
@@ -306,6 +387,9 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
     email: '',
     direccion: '',
   });
+
+  // Estado para manejar errores de validación
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const calcularEdad = (fechaNacimiento: string) => {
     if (!fechaNacimiento) return 0;
@@ -319,17 +403,122 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
     return edad;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Validar campos obligatorios del tab actual
+  const validateCurrentTab = (): boolean => {
+    const newErrors: Record<string, string> = {};
 
-    // Validaciones
-    if (!formData.nombres || !formData.apellidos || !formData.fechaNacimiento) {
-      alert('Por favor complete todos los campos obligatorios marcados con *');
+    switch (activeTab) {
+      case 'personal':
+        if (!formData.nombres) {
+          newErrors.nombres = 'Los nombres son obligatorios';
+        }
+        if (!formData.apellidos) {
+          newErrors.apellidos = 'Los apellidos son obligatorios';
+        }
+        if (!formData.fechaNacimiento) {
+          newErrors.fechaNacimiento = 'La fecha de nacimiento es obligatoria';
+        }
+        if (!formData.genero) {
+          newErrors.genero = 'Debe seleccionar el género';
+        }
+        break;
+      case 'contacto':
+        // El tab de contacto no tiene campos obligatorios
+        break;
+      case 'medica':
+        // El tab de información médica no tiene campos obligatorios
+        break;
+      case 'acudientes':
+        if (formData.acudientes.length === 0) {
+          newErrors.acudientes = 'Debe agregar al menos un acudiente';
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Avanzar al siguiente tab
+  const handleContinue = () => {
+    if (!validateCurrentTab()) {
       return;
     }
 
+    // Limpiar errores del tab actual al avanzar exitosamente
+    const tabErrors: string[] = [];
+    switch (activeTab) {
+      case 'personal':
+        tabErrors.push('nombres', 'apellidos', 'fechaNacimiento', 'genero');
+        break;
+      case 'acudientes':
+        tabErrors.push('acudientes');
+        break;
+    }
+    
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      tabErrors.forEach(key => delete newErrors[key]);
+      return newErrors;
+    });
+
+    const tabOrder: Array<'personal' | 'contacto' | 'medica' | 'acudientes'> = [
+      'personal',
+      'contacto',
+      'medica',
+      'acudientes',
+    ];
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex < tabOrder.length - 1) {
+      setActiveTab(tabOrder[currentIndex + 1]);
+    }
+  };
+
+  // Volver al tab anterior
+  const handleBack = () => {
+    const tabOrder: Array<'personal' | 'contacto' | 'medica' | 'acudientes'> = [
+      'personal',
+      'contacto',
+      'medica',
+      'acudientes',
+    ];
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabOrder[currentIndex - 1]);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validar todos los campos obligatorios
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.nombres) {
+      newErrors.nombres = 'Los nombres son obligatorios';
+    }
+    if (!formData.apellidos) {
+      newErrors.apellidos = 'Los apellidos son obligatorios';
+    }
+    if (!formData.fechaNacimiento) {
+      newErrors.fechaNacimiento = 'La fecha de nacimiento es obligatoria';
+    }
+    if (!formData.genero) {
+      newErrors.genero = 'Debe seleccionar el género';
+    }
     if (formData.acudientes.length === 0) {
-      alert('Debe agregar al menos un acudiente');
+      newErrors.acudientes = 'Debe agregar al menos un acudiente';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // Ir al primer tab con errores
+      if (newErrors.nombres || newErrors.apellidos || newErrors.fechaNacimiento || newErrors.genero) {
+        setActiveTab('personal');
+      } else if (newErrors.acudientes) {
+        setActiveTab('acudientes');
+      }
       return;
     }
 
@@ -337,19 +526,36 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
   };
 
   const handleAddAcudiente = () => {
-    if (!acudienteData.nombres || !acudienteData.telefonoPrincipal) {
-      alert('Nombre y teléfono principal son obligatorios');
+    const acudienteErrors: Record<string, string> = {};
+    
+    if (!acudienteData.nombres) {
+      acudienteErrors.acudienteNombres = 'El nombre del acudiente es obligatorio';
+    }
+    if (!acudienteData.telefonoPrincipal) {
+      acudienteErrors.acudienteTelefono = 'El teléfono principal es obligatorio';
+    }
+
+    if (Object.keys(acudienteErrors).length > 0) {
+      setErrors(prev => ({ ...prev, ...acudienteErrors }));
       return;
     }
 
+    // Limpiar errores del acudiente al agregar
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.acudienteNombres;
+      delete newErrors.acudienteTelefono;
+      return newErrors;
+    });
+
     if (editingAcudiente) {
       // Actualizar acudiente existente
-      setFormData({
-        ...formData,
-        acudientes: formData.acudientes.map(a =>
+      setFormData(prev => ({
+        ...prev,
+        acudientes: prev.acudientes.map(a =>
           a.id === editingAcudiente.id ? { ...acudienteData, id: editingAcudiente.id } : a
         ),
-      });
+      }));
       setEditingAcudiente(null);
     } else {
       // Agregar nuevo acudiente
@@ -357,11 +563,18 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
         ...acudienteData,
         id: `acu${Date.now()}`,
       };
-      setFormData({
-        ...formData,
-        acudientes: [...formData.acudientes, newAcudiente],
-      });
+      setFormData(prev => ({
+        ...prev,
+        acudientes: [...prev.acudientes, newAcudiente],
+      }));
     }
+
+    // Limpiar error de acudientes después de agregar/editar
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.acudientes;
+      return newErrors;
+    });
 
     // Resetear formulario
     setAcudienteData({
@@ -384,10 +597,10 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
 
   const handleRemoveAcudiente = (id: string) => {
     if (confirm('¿Eliminar este acudiente?')) {
-      setFormData({
-        ...formData,
-        acudientes: formData.acudientes.filter((a) => a.id !== id),
-      });
+      setFormData(prev => ({
+        ...prev,
+        acudientes: prev.acudientes.filter((a) => a.id !== id),
+      }));
     }
   };
 
@@ -476,7 +689,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <select
                     value={formData.tipoIdentificacion || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, tipoIdentificacion: e.target.value as TipoIdentificacion })
+                      setFormData(prev => ({ ...prev, tipoIdentificacion: e.target.value as TipoIdentificacion }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -494,7 +707,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="text"
                     value={formData.numeroIdentificacion || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, numeroIdentificacion: e.target.value })
+                      setFormData(prev => ({ ...prev, numeroIdentificacion: e.target.value }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -508,13 +721,27 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <input
                     type="text"
                     value={formData.nombres}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nombres: e.target.value })
-                    }
-                    className="input-compact"
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, nombres: e.target.value }));
+                      // Limpiar error al escribir
+                      if (errors.nombres) {
+                        setErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.nombres;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={`input-compact ${errors.nombres ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                     required
                     disabled={isViewMode}
                   />
+                  {errors.nombres && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.nombres}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -524,13 +751,27 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <input
                     type="text"
                     value={formData.apellidos}
-                    onChange={(e) =>
-                      setFormData({ ...formData, apellidos: e.target.value })
-                    }
-                    className="input-compact"
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, apellidos: e.target.value }));
+                      // Limpiar error al escribir
+                      if (errors.apellidos) {
+                        setErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.apellidos;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={`input-compact ${errors.apellidos ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                     required
                     disabled={isViewMode}
                   />
+                  {errors.apellidos && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.apellidos}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -540,13 +781,27 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <input
                     type="date"
                     value={formData.fechaNacimiento}
-                    onChange={(e) =>
-                      setFormData({ ...formData, fechaNacimiento: e.target.value })
-                    }
-                    className="input-compact"
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, fechaNacimiento: e.target.value }));
+                      // Limpiar error al cambiar
+                      if (errors.fechaNacimiento) {
+                        setErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.fechaNacimiento;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={`input-compact ${errors.fechaNacimiento ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                     required
                     disabled={isViewMode}
                   />
+                  {errors.fechaNacimiento && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.fechaNacimiento}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -570,11 +825,20 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                         name="genero"
                         value="Masculino"
                         checked={formData.genero === 'Masculino'}
-                        onChange={(e) =>
-                          setFormData({ ...formData, genero: e.target.value as Genero })
-                        }
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, genero: e.target.value as Genero }));
+                          // Limpiar error al seleccionar
+                          if (errors.genero) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors.genero;
+                              return newErrors;
+                            });
+                          }
+                        }}
                         className="mr-2 w-4 h-4 text-primary"
                         disabled={isViewMode}
+                        required
                       />
                       <span className="text-sm text-gray-700">Masculino</span>
                     </label>
@@ -584,15 +848,30 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                         name="genero"
                         value="Femenino"
                         checked={formData.genero === 'Femenino'}
-                        onChange={(e) =>
-                          setFormData({ ...formData, genero: e.target.value as Genero })
-                        }
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, genero: e.target.value as Genero }));
+                          // Limpiar error al seleccionar
+                          if (errors.genero) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors.genero;
+                              return newErrors;
+                            });
+                          }
+                        }}
                         className="mr-2 w-4 h-4 text-primary"
                         disabled={isViewMode}
+                        required
                       />
                       <span className="text-sm text-gray-700">Femenino</span>
                     </label>
                   </div>
+                  {errors.genero && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.genero}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -602,7 +881,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <select
                     value={formData.nivel}
                     onChange={(e) =>
-                      setFormData({ ...formData, nivel: e.target.value as Nivel })
+                      setFormData(prev => ({ ...prev, nivel: e.target.value as Nivel }))
                     }
                     className="input-compact"
                     required
@@ -620,7 +899,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <select
                     value={formData.estado || 'Activo'}
                     onChange={(e) =>
-                      setFormData({ ...formData, estado: e.target.value as EstadoEstudiante })
+                      setFormData(prev => ({ ...prev, estado: e.target.value as EstadoEstudiante }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -640,7 +919,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="date"
                     value={formData.fechaIngreso}
                     onChange={(e) =>
-                      setFormData({ ...formData, fechaIngreso: e.target.value })
+                      setFormData(prev => ({ ...prev, fechaIngreso: e.target.value }))
                     }
                     className="input-compact"
                     required
@@ -654,7 +933,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="date"
                     value={formData.fechaMatricula || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, fechaMatricula: e.target.value })
+                      setFormData(prev => ({ ...prev, fechaMatricula: e.target.value }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -678,7 +957,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="text"
                     value={formData.foto || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, foto: e.target.value })
+                      setFormData(prev => ({ ...prev, foto: e.target.value }))
                     }
                     className="input-compact"
                     placeholder="URL de la foto"
@@ -703,7 +982,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="text"
                     value={formData.direccion || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, direccion: e.target.value })
+                      setFormData(prev => ({ ...prev, direccion: e.target.value }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -716,7 +995,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="text"
                     value={formData.barrio || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, barrio: e.target.value })
+                      setFormData(prev => ({ ...prev, barrio: e.target.value }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -729,7 +1008,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="tel"
                     value={formData.telefonoContacto || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, telefonoContacto: e.target.value })
+                      setFormData(prev => ({ ...prev, telefonoContacto: e.target.value }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -752,7 +1031,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <select
                     value={formData.tipoSangre || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, tipoSangre: e.target.value as TipoSangre })
+                      setFormData(prev => ({ ...prev, tipoSangre: e.target.value as TipoSangre }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -775,7 +1054,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     type="text"
                     value={formData.eps || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, eps: e.target.value })
+                      setFormData(prev => ({ ...prev, eps: e.target.value }))
                     }
                     className="input-compact"
                     disabled={isViewMode}
@@ -787,7 +1066,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <textarea
                     value={formData.alergias || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, alergias: e.target.value })
+                      setFormData(prev => ({ ...prev, alergias: e.target.value }))
                     }
                     className="textarea-compact"
                     disabled={isViewMode}
@@ -800,7 +1079,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <textarea
                     value={formData.condicionesMedicas || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, condicionesMedicas: e.target.value })
+                      setFormData(prev => ({ ...prev, condicionesMedicas: e.target.value }))
                     }
                     className="textarea-compact"
                     disabled={isViewMode}
@@ -813,7 +1092,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <textarea
                     value={formData.medicamentos || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, medicamentos: e.target.value })
+                      setFormData(prev => ({ ...prev, medicamentos: e.target.value }))
                     }
                     className="textarea-compact"
                     disabled={isViewMode}
@@ -826,7 +1105,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                   <textarea
                     value={formData.observacionesMedicas || ''}
                     onChange={(e) =>
-                      setFormData({ ...formData, observacionesMedicas: e.target.value })
+                      setFormData(prev => ({ ...prev, observacionesMedicas: e.target.value }))
                     }
                     className="textarea-compact"
                     disabled={isViewMode}
@@ -909,12 +1188,26 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                       <input
                         type="text"
                         value={acudienteData.nombres}
-                        onChange={(e) =>
-                          setAcudienteData({ ...acudienteData, nombres: e.target.value })
-                        }
-                        className="input-compact"
+                        onChange={(e) => {
+                          setAcudienteData({ ...acudienteData, nombres: e.target.value });
+                          // Limpiar error al escribir
+                          if (errors.acudienteNombres) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors.acudienteNombres;
+                              return newErrors;
+                            });
+                          }
+                        }}
+                        className={`input-compact ${errors.acudienteNombres ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                         placeholder="Nombres del acudiente"
                       />
+                      {errors.acudienteNombres && (
+                        <p className="text-red-500 text-xs mt-1 flex items-center">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {errors.acudienteNombres}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -966,15 +1259,29 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                       <input
                         type="tel"
                         value={acudienteData.telefonoPrincipal}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setAcudienteData({
                             ...acudienteData,
                             telefonoPrincipal: e.target.value,
-                          })
-                        }
-                        className="input-compact"
+                          });
+                          // Limpiar error al escribir
+                          if (errors.acudienteTelefono) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors.acudienteTelefono;
+                              return newErrors;
+                            });
+                          }
+                        }}
+                        className={`input-compact ${errors.acudienteTelefono ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                         placeholder="Teléfono principal"
                       />
+                      {errors.acudienteTelefono && (
+                        <p className="text-red-500 text-xs mt-1 flex items-center">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {errors.acudienteTelefono}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -1147,6 +1454,16 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                 </div>
               )}
 
+              {/* Mensaje de error si no hay acudientes */}
+              {errors.acudientes && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                  <p className="text-red-600 text-sm flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    {errors.acudientes}
+                  </p>
+                </div>
+              )}
+
               {/* Lista de Acudientes */}
               <div className="space-y-2">
                 {formData.acudientes.length > 0 ? (
@@ -1244,9 +1561,28 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
         <div className="modal-footer">
           {!isViewMode ? (
             <div className="flex justify-between items-center">
-              <p className="text-xs text-gray-600">
-                <span className="text-secondary">*</span> Campos obligatorios
-              </p>
+              <div className="flex items-center space-x-2">
+                <p className="text-xs text-gray-600">
+                  <span className="text-secondary">*</span> Campos obligatorios
+                </p>
+                {/* Indicador de progreso */}
+                <div className="flex items-center space-x-1">
+                  {tabs.map((tab, index) => {
+                    const currentIndex = tabs.findIndex(t => t.id === activeTab);
+                    const isCompleted = index < currentIndex;
+                    const isCurrent = index === currentIndex;
+                    return (
+                      <div
+                        key={tab.id}
+                        className={`w-2 h-2 rounded-full ${
+                          isCompleted || isCurrent ? 'bg-primary' : 'bg-gray-300'
+                        }`}
+                        title={tab.label}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
               <div className="flex space-x-2">
                 <button
                   type="button"
@@ -1255,14 +1591,34 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  onClick={handleSubmit}
-                  className="btn-primary flex items-center text-sm py-2 px-4"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {mode === 'create' ? 'Crear Estudiante' : 'Guardar Cambios'}
-                </button>
+                {activeTab !== 'personal' && (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+                  >
+                    Atrás
+                  </button>
+                )}
+                {activeTab === 'acudientes' ? (
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    className="btn-primary flex items-center text-sm py-2 px-4"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {mode === 'create' ? 'Crear Estudiante' : 'Guardar Cambios'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleContinue}
+                    className="btn-primary flex items-center text-sm py-2 px-4"
+                  >
+                    Continuar
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </button>
+                )}
               </div>
             </div>
           ) : (

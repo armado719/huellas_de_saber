@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   UserCheck,
@@ -7,36 +7,65 @@ import {
   Calendar,
   AlertCircle,
 } from 'lucide-react';
-import { mockEstudiantes, mockProfesores, mockPagos, mockAsistencias } from '../data/mockData';
-import { Nivel } from '../types';
+import { estudiantesService } from '../services/estudiantesService';
+import { profesoresService } from '../services/profesoresService';
+import { pagosService } from '../services/pagosService';
+import { Nivel, Estudiante, Profesor, Pago } from '../types';
 
 const Dashboard: React.FC = () => {
-  const totalEstudiantes = mockEstudiantes.filter((e) => e.activo).length;
-  const totalProfesores = mockProfesores.filter((p) => p.activo).length;
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [profesores, setProfesores] = useState<Profesor[]>([]);
+  const [pagos, setPagos] = useState<Pago[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const estudiantesPorNivel = mockEstudiantes
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [estudiantesData, profesoresData, pagosData] = await Promise.all([
+        estudiantesService.getAll(),
+        profesoresService.getAll(),
+        pagosService.getAll(),
+      ]);
+
+      setEstudiantes(estudiantesData);
+      setProfesores(profesoresData);
+      setPagos(pagosData);
+    } catch (err) {
+      console.error('Error al cargar datos del dashboard:', err);
+      setError('Error al cargar los datos. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalEstudiantes = estudiantes.filter((e) => e.activo).length;
+  const totalProfesores = profesores.filter((p) => p.activo).length;
+
+  const estudiantesPorNivel = estudiantes
     .filter((e) => e.activo)
     .reduce((acc, est) => {
       acc[est.nivel] = (acc[est.nivel] || 0) + 1;
       return acc;
     }, {} as Record<Nivel, number>);
 
-  const pagosPagados = mockPagos
+  const pagosPagados = pagos
     .filter((p) => p.estado === 'pagado')
     .reduce((sum, p) => sum + p.monto, 0);
 
-  const pagosPendientes = mockPagos
+  const pagosPendientes = pagos
     .filter((p) => p.estado !== 'pagado')
-    .reduce((sum, p) => sum + p.monto, 0);
+    .reduce((sum, p) => sum + (p.monto - (p.monto_pagado || 0)), 0);
 
-  const asistenciaHoy = mockAsistencias.filter(
-    (a) => a.fecha === new Date().toISOString().split('T')[0]
-  );
-  const presentesHoy = asistenciaHoy.filter((a) => a.presente).length;
-  const porcentajeAsistencia =
-    asistenciaHoy.length > 0
-      ? Math.round((presentesHoy / asistenciaHoy.length) * 100)
-      : 0;
+  // Asistencia hoy - por ahora usamos un valor por defecto
+  // TODO: Implementar cuando el endpoint de asistencia esté listo
+  const porcentajeAsistencia = 0;
 
   const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
 
@@ -49,7 +78,25 @@ const Dashboard: React.FC = () => {
         </p>
       </div>
 
+      {/* Indicadores de Loading y Error */}
+      {loading && (
+        <div className="card text-center py-8">
+          <p className="text-gray-600">Cargando estadísticas...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="card text-center py-8 bg-red-50">
+          <p className="text-red-600">{error}</p>
+          <button onClick={cargarDatos} className="btn-primary mt-4">
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Stats Cards */}
+      {!loading && !error && (
+      <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="card bg-primary text-white shadow-xl hover:shadow-2xl transition-shadow">
           <div className="flex items-center justify-between">
@@ -176,7 +223,7 @@ const Dashboard: React.FC = () => {
             <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 mt-0.5" />
             <div>
               <p className="font-semibold text-gray-800">
-                {mockPagos.filter((p) => p.estado === 'vencido').length} pagos vencidos
+                {pagos.filter((p) => p.estado === 'vencido').length} pagos vencidos
               </p>
               <p className="text-sm text-gray-600">
                 Revisar sección de pagos para más detalles
@@ -197,6 +244,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };

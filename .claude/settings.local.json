@@ -15,7 +15,14 @@
       "Bash(node -e:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nCompletar módulo de Gestión de Pagos al 100%\n\n- Actualizar types/index.ts con tipos completos para pagos (EstadoPago, MetodoPago, ConceptoPago, MesPension, Abono)\n- Agregar 24 registros de pagos variados en mockData.ts (10 pagados, 4 pendientes, 3 vencidos, 3 parciales con abonos)\n- Crear componente Pagos.tsx completo (1836 líneas) con:\n  * Tabla mejorada con ordenamiento por columnas y paginación (10/20/50)\n  * Estadísticas: Total recaudado, pendiente, vencidos, parciales\n  * Filtros avanzados: estado, concepto, mes, estudiante\n  * Búsqueda por estudiante, concepto o número de recibo\n  * Selección múltiple con acciones en lote\n  * Modal Registrar Pago completo con validaciones\n  * Modal Ver Detalle con historial de abonos y pagos del estudiante\n  * Modal de Reportes financieros (4 tipos)\n  * Modal de Recordatorios para pagos vencidos/pendientes\n  * Generación de Recibo PDF profesional con jsPDF\n  * Indicadores visuales (próximo a vencer, estados de color)\n  * Formato de moneda colombiano ($XXX.XXX)\n  * Diseño responsive completo\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(dir:*)",
+      "Bash(netstat:*)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(git -C \"C:/proyecto/huellas_de_saber\" log --oneline)",
+      "Bash(sc query:*)",
+      "Bash(wmic service:*)"
     ],
     "deny": [],
     "ask": []

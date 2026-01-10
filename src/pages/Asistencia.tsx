@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ClipboardCheck,
   Calendar,
@@ -16,7 +16,8 @@ import {
   Check,
   Filter,
 } from 'lucide-react';
-import { mockEstudiantes, mockAsistencias } from '../data/mockData';
+import { estudiantesService } from '../services/estudiantesService';
+import { asistenciaService } from '../services/asistenciaService';
 import {
   AsistenciaRegistro,
   Nivel,
@@ -31,7 +32,28 @@ const Asistencia: React.FC = () => {
   const isAdmin = user?.rol === 'admin';
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Transición');
-  const [asistencias, setAsistencias] = useState<AsistenciaRegistro[]>(mockAsistencias);
+  const [asistencias, setAsistencias] = useState<AsistenciaRegistro[]>([]);
+  const [estudiantes, setEstudiantes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const estudiantesData = await estudiantesService.getAll();
+      setEstudiantes(estudiantesData);
+    } catch (err) {
+      console.error('Error al cargar datos:', err);
+      setError('Error al cargar los datos. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
   const [registrosActuales, setRegistrosActuales] = useState<
     Record<string, {
       estado: EstadoAsistencia;
@@ -63,7 +85,7 @@ const Asistencia: React.FC = () => {
 
   const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
 
-  const estudiantesDelNivel = mockEstudiantes.filter(
+  const estudiantesDelNivel = estudiantes.filter(
     (est) => est.nivel === nivelSeleccionado && est.activo
   );
 
@@ -558,8 +580,8 @@ const Asistencia: React.FC = () => {
               <div>
                 <h2>Justificar Ausencia</h2>
                 <p>
-                  {mockEstudiantes.find((e) => e.id === selectedEstudianteJust)?.nombres}{' '}
-                  {mockEstudiantes.find((e) => e.id === selectedEstudianteJust)?.apellidos}
+                  {estudiantes.find((e) => e.id === selectedEstudianteJust)?.nombres}{' '}
+                  {estudiantes.find((e) => e.id === selectedEstudianteJust)?.apellidos}
                 </p>
               </div>
               <button
@@ -650,7 +672,7 @@ const Asistencia: React.FC = () => {
                   className="input-compact"
                 >
                   <option value="">Seleccione acudiente...</option>
-                  {mockEstudiantes
+                  {estudiantes
                     .find((e) => e.id === selectedEstudianteJust)
                     ?.acudientes.map((acu) => (
                       <option key={acu.id} value={acu.nombres}>
@@ -716,7 +738,7 @@ const Asistencia: React.FC = () => {
                   <label className="label-compact">Estudiante</label>
                   <select className="input-compact">
                     <option value="">Todos</option>
-                    {mockEstudiantes.map((est) => (
+                    {estudiantes.map((est) => (
                       <option key={est.id} value={est.id}>
                         {est.nombres} {est.apellidos}
                       </option>
@@ -766,7 +788,7 @@ const Asistencia: React.FC = () => {
                   </thead>
                   <tbody>
                     {asistencias.slice(0, 10).map((reg) => {
-                      const est = mockEstudiantes.find((e) => e.id === reg.estudianteId);
+                      const est = estudiantes.find((e) => e.id === reg.estudianteId);
                       return (
                         <tr key={reg.id} className="border-b border-gray-100">
                           <td className="py-1.5 px-3 text-xs">

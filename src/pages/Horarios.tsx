@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Calendar,
   Clock,
@@ -16,7 +16,8 @@ import {
   AlertCircle,
   CalendarDays,
 } from 'lucide-react';
-import { mockHorarios, mockEventos, mockProfesores } from '../data/mockData';
+import { horariosService } from '../services/horariosService';
+import { profesoresService } from '../services/profesoresService';
 import {
   Nivel,
   Horario,
@@ -38,12 +39,34 @@ const Horarios: React.FC = () => {
   const [claseEditando, setClaseEditando] = useState<Horario | null>(null);
   const [filtroEvento, setFiltroEvento] = useState<TipoEvento | 'Todos'>('Todos');
   const [mesActual, setMesActual] = useState(new Date());
-  const [horarios, setHorarios] = useState<Horario[]>(mockHorarios);
-  const [eventos, setEventos] = useState<EventoCalendario[]>(mockEventos);
+  const [horarios, setHorarios] = useState<Horario[]>([]);
+  const [eventos, setEventos] = useState<EventoCalendario[]>([]);
+  const [profesores, setProfesores] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const horarioRef = useRef<HTMLDivElement>(null);
 
   const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
   const diasSemana: DiaSemana[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+
+  // Cargar datos reales desde el backend
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setLoading(true);
+        const [horariosData, profesoresData] = await Promise.all([
+          horariosService.getAll(),
+          profesoresService.getAll(),
+        ]);
+        setHorarios(horariosData);
+        setProfesores(profesoresData);
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    cargarDatos();
+  }, []);
 
   // Horarios de 7:00 AM a 2:00 PM
   const franjaHoraria = [
@@ -63,7 +86,7 @@ const Horarios: React.FC = () => {
   );
 
   const getProfesorNombre = (profesorId: string) => {
-    const profesor = mockProfesores.find((p) => p.id === profesorId);
+    const profesor = profesores.find((p) => p.id === profesorId);
     return profesor ? `${profesor.nombres} ${profesor.apellidos}` : 'N/A';
   };
 
@@ -122,12 +145,11 @@ const Horarios: React.FC = () => {
     setClaseEditando(null);
   };
 
-  const guardarClase = (e: React.FormEvent<HTMLFormElement>) => {
+  const guardarClase = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    const nuevaClase: Horario = {
-      id: claseEditando?.id || `hor${Date.now()}`,
+    const datosClase = {
       nivel: formData.get('nivel') as Nivel,
       diaSemana: parseInt(formData.get('diaSemana') as string),
       diaSemanaTexto: diasSemana[parseInt(formData.get('diaSemana') as string) - 1],
@@ -141,13 +163,19 @@ const Horarios: React.FC = () => {
       observaciones: formData.get('observaciones') as string || undefined,
     };
 
-    if (claseEditando) {
-      setHorarios(horarios.map((h) => (h.id === claseEditando.id ? nuevaClase : h)));
-    } else {
-      setHorarios([...horarios, nuevaClase]);
+    try {
+      if (claseEditando) {
+        const horarioActualizado = await horariosService.update(claseEditando.id, datosClase);
+        setHorarios(horarios.map((h) => (h.id === claseEditando.id ? horarioActualizado : h)));
+      } else {
+        const nuevoHorario = await horariosService.create(datosClase);
+        setHorarios([...horarios, nuevoHorario]);
+      }
+      cerrarModalClase();
+    } catch (error) {
+      console.error('Error al guardar clase:', error);
+      alert('Error al guardar la clase. Por favor, intente nuevamente.');
     }
-
-    cerrarModalClase();
   };
 
   // ============ FUNCIONES PARA MODAL DE EVENTO ============
@@ -258,6 +286,26 @@ const Horarios: React.FC = () => {
   const imprimirHorario = () => {
     window.print();
   };
+
+  // Mostrar loading mientras se cargan los datos
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <Calendar className="w-8 h-8 text-primary mr-3" />
+            Horarios y Calendario
+          </h1>
+          <p className="text-gray-600">
+            Gestiona los horarios de clase y eventos del calendario escolar
+          </p>
+        </div>
+        <div className="card text-center py-12">
+          <p className="text-gray-600">Cargando horarios y profesores...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -692,11 +740,11 @@ const Horarios: React.FC = () => {
                     <label className="label">Profesor Asignado *</label>
                     <select
                       name="profesorId"
-                      defaultValue={claseEditando?.profesorId || mockProfesores[0]?.id}
+                      defaultValue={claseEditando?.profesorId || profesores[0]?.id}
                       className="input-field"
                       required
                     >
-                      {mockProfesores.map((prof) => (
+                      {profesores.map((prof) => (
                         <option key={prof.id} value={prof.id}>
                           {prof.nombres} {prof.apellidos}
                         </option>
@@ -851,7 +899,7 @@ const Horarios: React.FC = () => {
                     <label className="label">Responsable</label>
                     <select name="responsableId" className="input-field">
                       <option value="">Seleccionar...</option>
-                      {mockProfesores.map((prof) => (
+                      {profesores.map((prof) => (
                         <option key={prof.id} value={prof.id}>
                           {prof.nombres} {prof.apellidos}
                         </option>
