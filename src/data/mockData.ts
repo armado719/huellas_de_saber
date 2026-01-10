@@ -1,12 +1,12 @@
 import {
-  Estudiante,
-  Profesor,
   AsistenciaRegistro,
   Calificacion,
-  Horario,
+  Estudiante,
   EventoCalendario,
+  Horario,
   Mensaje,
   Pago,
+  Profesor,
   RecursoEducativo,
 } from '../types';
 
@@ -22,18 +22,18 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu001',
-        nombre: 'Carlos Rodríguez',
+        nombres: 'Carlos Rodríguez',
         parentesco: 'Padre',
-        telefono: '3201234567',
+        telefonoPrincipal: '3201234567',
         email: 'carlos.rodriguez@email.com',
         direccion: 'Cra 5 #12-34, Neiva',
         ocupacion: 'Ingeniero',
       },
       {
         id: 'acu002',
-        nombre: 'María Pérez',
+        nombres: 'María Pérez',
         parentesco: 'Madre',
-        telefono: '3109876543',
+        telefonoPrincipal: '3109876543',
         email: 'maria.perez@email.com',
         direccion: 'Cra 5 #12-34, Neiva',
         ocupacion: 'Doctora',
@@ -51,9 +51,9 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu003',
-        nombre: 'Luis Martínez',
+        nombres: 'Luis Martínez',
         parentesco: 'Padre',
-        telefono: '3157654321',
+        telefonoPrincipal: '3157654321',
         email: 'luis.martinez@email.com',
         direccion: 'Calle 8 #15-20, Neiva',
         ocupacion: 'Contador',
@@ -71,9 +71,9 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu004',
-        nombre: 'Andrea Silva',
+        nombres: 'Andrea Silva',
         parentesco: 'Madre',
-        telefono: '3186543210',
+        telefonoPrincipal: '3186543210',
         email: 'andrea.silva@email.com',
         direccion: 'Av. Circunvalar #20-30, Neiva',
         ocupacion: 'Abogada',
@@ -91,9 +91,9 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu005',
-        nombre: 'Pedro Torres',
+        nombres: 'Pedro Torres',
         parentesco: 'Padre',
-        telefono: '3143216789',
+        telefonoPrincipal: '3143216789',
         email: 'pedro.torres@email.com',
         direccion: 'Calle 15 #8-45, Neiva',
         ocupacion: 'Empresario',
@@ -111,9 +111,9 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu010',
-        nombre: 'Roberto Vargas',
+        nombres: 'Roberto Vargas',
         parentesco: 'Padre',
-        telefono: '3195678901',
+        telefonoPrincipal: '3195678901',
         email: 'roberto.vargas@email.com',
         direccion: 'Calle 20 #10-15, Neiva',
         ocupacion: 'Arquitecto',
@@ -131,9 +131,9 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu011',
-        nombre: 'Carmen Ortiz',
+        nombres: 'Carmen Ortiz',
         parentesco: 'Madre',
-        telefono: '3167890123',
+        telefonoPrincipal: '3167890123',
         email: 'carmen.ortiz@email.com',
         direccion: 'Av. Central #25-30, Neiva',
         ocupacion: 'Profesora',
@@ -151,9 +151,9 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu012',
-        nombre: 'Diana Díaz',
+        nombres: 'Diana Díaz',
         parentesco: 'Madre',
-        telefono: '3124567890',
+        telefonoPrincipal: '3124567890',
         email: 'diana.diaz@email.com',
         direccion: 'Cra 12 #18-22, Neiva',
         ocupacion: 'Psicóloga',
@@ -171,9 +171,9 @@ export const mockEstudiantes: Estudiante[] = [
     acudientes: [
       {
         id: 'acu006',
-        nombre: 'Claudia Méndez',
+        nombres: 'Claudia Méndez',
         parentesco: 'Madre',
-        telefono: '3198765432',
+        telefonoPrincipal: '3198765432',
         email: 'claudia.mendez@email.com',
         direccion: 'Cra 10 #25-10, Neiva',
         ocupacion: 'Profesora',

@@ -1,31 +1,32 @@
-import React, { useState, useEffect } from 'react';
 import {
-  ClipboardCheck,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Save,
-  Clock,
-  FileText,
   AlertTriangle,
+  Calendar,
+  Check,
+  CheckCircle,
   ChevronDown,
   ChevronUp,
-  History,
+  ClipboardCheck,
+  Clock,
   Download,
-  X,
-  Check,
+  FileText,
   Filter,
+  History,
+  Loader2,
+  Save,
+  X,
+  XCircle,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { estudiantesService } from '../services/estudiantesService';
-import { asistenciaService } from '../services/asistenciaService';
 import {
+  Acudiente,
   AsistenciaRegistro,
-  Nivel,
   EstadoAsistencia,
   Justificacion,
   MotivoJustificacion,
+  Nivel,
 } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 
 const Asistencia: React.FC = () => {
   const { user } = useAuth();
@@ -34,16 +35,17 @@ const Asistencia: React.FC = () => {
   const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Transición');
   const [asistencias, setAsistencias] = useState<AsistenciaRegistro[]>([]);
   const [estudiantes, setEstudiantes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+
     cargarDatos();
   }, []);
 
   const cargarDatos = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
       const estudiantesData = await estudiantesService.getAll();
       setEstudiantes(estudiantesData);
@@ -51,7 +53,7 @@ const Asistencia: React.FC = () => {
       console.error('Error al cargar datos:', err);
       setError('Error al cargar los datos. Por favor, intente nuevamente.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   const [registrosActuales, setRegistrosActuales] = useState<
@@ -314,6 +316,18 @@ const Asistencia: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="alert alert-error">
+          <AlertTriangle className="w-4 h-4 inline mr-2" />
+          {error}
+        </div>
+      )}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      ) : (
+      <>
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
@@ -674,7 +688,7 @@ const Asistencia: React.FC = () => {
                   <option value="">Seleccione acudiente...</option>
                   {estudiantes
                     .find((e) => e.id === selectedEstudianteJust)
-                    ?.acudientes.map((acu) => (
+                    ?.acudientes.map((acu: Acudiente) => (
                       <option key={acu.id} value={acu.nombres}>
                         {acu.nombres} ({acu.parentesco})
                       </option>
@@ -834,6 +848,8 @@ const Asistencia: React.FC = () => {
           </div>
         </div>
       )}
+    </>
+    )}
     </div>
   );
 };

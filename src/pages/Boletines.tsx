@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { FileText, Download, Eye, Search } from 'lucide-react';
-import { mockEstudiantes, mockCalificaciones, mockAsistencias, mockProfesores } from '../data/mockData';
-import { Boletin, Nivel, Periodo, Valoracion, DATOS_COLEGIO } from '../types';
-import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { Download, Eye, FileText, Search } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { mockAsistencias, mockCalificaciones, mockEstudiantes, mockProfesores } from '../data/mockData';
+import { Boletin, DATOS_COLEGIO, Nivel, Periodo, Valoracion } from '../types';
 
 // Competencias por dimensión (formato real del boletín)
 const COMPETENCIAS_COGNITIVA = [
@@ -164,35 +164,6 @@ const Boletines: React.FC = () => {
     );
   };
 
-  const getValoracionColor = (valoracion: string) => {
-    switch (valoracion) {
-      case 'Superior':
-        return 'bg-green-500';
-      case 'Alto':
-        return 'bg-blue-500';
-      case 'Básico':
-        return 'bg-yellow-500';
-      case 'Bajo':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  const getEmojiValoracion = (valoracion: Valoracion) => {
-    switch (valoracion) {
-      case 'Superior':
-        return '😊';
-      case 'Alto':
-        return '😐';
-      case 'Básico':
-        return '😐';
-      case 'Bajo':
-        return '☹️';
-      default:
-        return '';
-    }
-  };
 
   // Generar valoraciones aleatorias para competencias (simulación)
   const generarValoracionAleatoria = (): Valoracion => {

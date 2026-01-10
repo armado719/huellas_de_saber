@@ -1,15 +1,15 @@
+import { AsistenciaRegistro } from '../types';
 import api from './api';
-import { Asistencia } from '../types';
 
 export const asistenciaService = {
-  getByGrupoFecha: async (grupoId: string, fecha: string): Promise<Asistencia[]> => {
+  getByGrupoFecha: async (grupoId: string, fecha: string): Promise<AsistenciaRegistro[]> => {
     const response = await api.get('/asistencia/grupo', {
       params: { grupo_id: grupoId, fecha }
     });
     return response.data;
   },
 
-  getByEstudiante: async (estudianteId: string, fechaInicio?: string, fechaFin?: string): Promise<Asistencia[]> => {
+  getByEstudiante: async (estudianteId: string, fechaInicio?: string, fechaFin?: string): Promise<AsistenciaRegistro[]> => {
     const response = await api.get('/asistencia/estudiante', {
       params: { estudiante_id: estudianteId, fecha_inicio: fechaInicio, fecha_fin: fechaFin }
     });
@@ -30,17 +30,17 @@ export const asistenciaService = {
     return response.data;
   },
 
-  create: async (asistencia: Omit<Asistencia, 'id'>): Promise<Asistencia> => {
+  create: async (asistencia: Omit<AsistenciaRegistro, 'id'>): Promise<AsistenciaRegistro> => {
     const response = await api.post('/asistencia', asistencia);
     return response.data;
   },
 
-  createMasiva: async (asistencias: Omit<Asistencia, 'id'>[]): Promise<Asistencia[]> => {
+  createMasiva: async (asistencias: Omit<AsistenciaRegistro, 'id'>[]): Promise<AsistenciaRegistro[]> => {
     const response = await api.post('/asistencia/masiva', { asistencias });
     return response.data;
   },
 
-  update: async (id: string, asistencia: Partial<Asistencia>): Promise<Asistencia> => {
+  update: async (id: string, asistencia: Partial<AsistenciaRegistro>): Promise<AsistenciaRegistro> => {
     const response = await api.put(`/asistencia/${id}`, asistencia);
     return response.data;
   },

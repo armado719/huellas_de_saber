@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Users,
-  UserCheck,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
   AlertCircle,
+  Calendar,
+  TrendingDown,
+  TrendingUp,
+  UserCheck,
+  Users,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { estudiantesService } from '../services/estudiantesService';
-import { profesoresService } from '../services/profesoresService';
 import { pagosService } from '../services/pagosService';
-import { Nivel, Estudiante, Profesor, Pago } from '../types';
+import { profesoresService } from '../services/profesoresService';
+import { Estudiante, Nivel, Pago, Profesor } from '../types';
 
 const Dashboard: React.FC = () => {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
 
   const pagosPendientes = pagos
     .filter((p) => p.estado !== 'pagado')
-    .reduce((sum, p) => sum + (p.monto - (p.monto_pagado || 0)), 0);
+    .reduce((sum, p) => sum + (p.monto - (p.montoPagado || 0)), 0);
 
   // Asistencia hoy - por ahora usamos un valor por defecto
   // TODO: Implementar cuando el endpoint de asistencia esté listo

@@ -1,8 +1,8 @@
+import { AlertCircle, Lock, Mail } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { DATOS_COLEGIO } from '../types';
-import { GraduationCap, Lock, Mail, AlertCircle } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');

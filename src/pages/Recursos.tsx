@@ -1,40 +1,39 @@
-import React, { useState, useMemo } from 'react';
 import {
+  Award,
+  BarChart3,
   BookOpen,
-  Search,
-  Filter,
-  FileText,
-  Video,
-  Image as ImageIcon,
-  Link as LinkIcon,
-  Upload,
-  Download,
-  Eye,
-  X,
-  Star,
-  Share2,
-  Edit,
-  Trash2,
-  Copy,
-  Grid,
-  List,
+  Calendar,
   ChevronLeft,
   ChevronRight,
-  BarChart3,
-  FileSpreadsheet,
-  Presentation,
-  ExternalLink,
-  TrendingUp,
   Clock,
+  Copy,
+  Download,
+  Edit,
+  ExternalLink,
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  Filter,
+  Grid,
+  Image as ImageIcon,
+  List,
+  Presentation,
+  Search,
+  Share2,
   Sparkles,
-  Award,
+  Star,
   Tag,
-  Calendar,
+  Trash2,
+  TrendingUp,
+  Upload,
   User,
+  Video,
+  X,
 } from 'lucide-react';
-import { mockRecursos, mockProfesores } from '../data/mockData';
-import { RecursoEducativo, Nivel, TipoRecurso, CategoriaRecurso } from '../types';
+import React, { useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { mockProfesores, mockRecursos } from '../data/mockData';
+import { CategoriaRecurso, Nivel, RecursoEducativo, TipoRecurso } from '../types';
 
 const Recursos: React.FC = () => {
   const { user } = useAuth();

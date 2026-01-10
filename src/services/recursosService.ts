@@ -1,27 +1,27 @@
+import { RecursoEducativo } from '../types';
 import api from './api';
-import { Recurso } from '../types';
 
 export const recursosService = {
-  getAll: async (tipo?: string, materia?: string): Promise<Recurso[]> => {
+  getAll: async (tipo?: string, materia?: string): Promise<RecursoEducativo[]> => {
     const response = await api.get('/recursos', {
       params: { tipo, materia }
     });
     return response.data;
   },
 
-  getById: async (id: string): Promise<Recurso> => {
+  getById: async (id: string): Promise<RecursoEducativo> => {
     const response = await api.get(`/recursos/${id}`);
     return response.data;
   },
 
-  getMasDescargados: async (limit: number = 10): Promise<Recurso[]> => {
+  getMasDescargados: async (limit: number = 10): Promise<RecursoEducativo[]> => {
     const response = await api.get('/recursos/mas-descargados', {
       params: { limit }
     });
     return response.data;
   },
 
-  getDestacados: async (): Promise<Recurso[]> => {
+  getDestacados: async (): Promise<RecursoEducativo[]> => {
     const response = await api.get('/recursos/destacados');
     return response.data;
   },
@@ -31,7 +31,7 @@ export const recursosService = {
     return response.data;
   },
 
-  create: async (formData: FormData): Promise<Recurso> => {
+  create: async (formData: FormData): Promise<RecursoEducativo> => {
     const response = await api.post('/recursos', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -40,7 +40,7 @@ export const recursosService = {
     return response.data;
   },
 
-  update: async (id: string, formData: FormData): Promise<Recurso> => {
+  update: async (id: string, formData: FormData): Promise<RecursoEducativo> => {
     const response = await api.put(`/recursos/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

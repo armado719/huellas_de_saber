@@ -1,29 +1,27 @@
-import React, { useState, useMemo } from 'react';
 import {
-  MessageSquare,
-  Send,
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Clock,
   Inbox,
   Mail,
   MailOpen,
-  X,
-  Plus,
-  Search,
-  Filter,
-  Trash2,
-  Reply,
-  Forward,
-  Star,
+  MessageSquare,
   Paperclip,
-  Check,
-  CheckCheck,
+  Plus,
+  Reply,
+  Search,
+  Send,
+  Star,
+  Trash2,
+  X,
   XCircle,
-  AlertCircle,
-  ArrowLeft,
-  Clock,
 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { mockMensajes, mockProfesores } from '../data/mockData';
 import { Mensaje, PrioridadMensaje } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 
 const Mensajes: React.FC = () => {
   const { user } = useAuth();
@@ -346,13 +344,13 @@ const Mensajes: React.FC = () => {
   const getEstadoIcon = (estado?: string) => {
     switch (estado) {
       case 'Leído':
-        return <CheckCheck className="w-4 h-4 text-blue-600" title="Leído" />;
+        return <CheckCheck className="w-4 h-4 text-blue-600" />;
       case 'Entregado':
-        return <Check className="w-4 h-4 text-gray-600" title="Entregado" />;
+        return <Check className="w-4 h-4 text-gray-600" />;
       case 'No Entregado':
-        return <XCircle className="w-4 h-4 text-red-600" title="No entregado" />;
+        return <XCircle className="w-4 h-4 text-red-600" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-400" title="Enviado" />;
+        return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 

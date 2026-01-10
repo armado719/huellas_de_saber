@@ -1,34 +1,33 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
+  AlertCircle,
   Calendar,
-  Clock,
-  Plus,
-  Edit,
-  Printer,
-  FileDown,
-  Eye,
-  Filter,
-  X,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  Edit,
+  Eye,
+  FileDown,
   MapPin,
+  Plus,
+  Printer,
   Users,
-  AlertCircle,
-  CalendarDays,
+  X,
 } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { horariosService } from '../services/horariosService';
 import { profesoresService } from '../services/profesoresService';
 import {
-  Nivel,
-  Horario,
-  EventoCalendario,
-  TipoActividad,
   DiaSemana,
-  TipoEvento,
+  EventoCalendario,
+  Horario,
+  Nivel,
   PrioridadEvento,
+  TipoActividad,
+  TipoEvento,
 } from '../types';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const Horarios: React.FC = () => {
   const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Transición');
@@ -442,12 +441,19 @@ const Horarios: React.FC = () => {
                                 <button
                                   onClick={() => {
                                     // Pre-rellenar datos para nueva clase
-                                    const formData = {
+                                    const formData: Horario = {
+                                      id: '',
                                       nivel: nivelSeleccionado,
                                       diaSemana: diaIndex + 1,
                                       horaInicio,
+                                      horaFin: '',
+                                      materia: '',
+                                      tipoActividad: 'Académica',
+                                      profesorId: profesores[0]?.id || '',
+                                      color: '#D1FAE5',
+                                      observaciones: '',
                                     };
-                                    abrirModalClase();
+                                    abrirModalClase(formData);
                                   }}
                                   className="text-gray-300 hover:text-primary transition-colors w-full py-2"
                                 >

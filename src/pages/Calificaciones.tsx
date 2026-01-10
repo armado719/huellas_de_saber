@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
 import {
+  AlertTriangle,
   GraduationCap,
+  Loader2,
   Save,
   Search,
   X,
 } from 'lucide-react';
-import { estudiantesService } from '../services/estudiantesService';
-import { calificacionesService } from '../services/calificacionesService';
-import { Calificacion, CalificacionDetalle, Dimension, Nivel, Periodo, Valoracion } from '../types';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { estudiantesService } from '../services/estudiantesService';
+import { Calificacion, CalificacionDetalle, Dimension, Estudiante, Nivel, Periodo, Valoracion } from '../types';
 
 const Calificaciones: React.FC = () => {
   const { user } = useAuth();
@@ -20,7 +21,7 @@ const Calificaciones: React.FC = () => {
   const [estudianteSeleccionado, setEstudianteSeleccionado] = useState<string | null>(null);
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ const Calificaciones: React.FC = () => {
 
   const cargarDatos = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
       const estudiantesData = await estudiantesService.getAll();
       setEstudiantes(estudiantesData);
@@ -37,7 +38,7 @@ const Calificaciones: React.FC = () => {
       console.error('Error al cargar datos:', err);
       setError('Error al cargar los datos. Por favor, intente nuevamente.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -86,6 +87,18 @@ const Calificaciones: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="alert alert-error">
+          <AlertTriangle className="w-4 h-4 inline mr-2" />
+          {error}
+        </div>
+      )}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      ) : (
+        <>
       <div>
         <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
           <GraduationCap className="w-8 h-8 text-primary mr-3" />
@@ -265,7 +278,10 @@ const Calificaciones: React.FC = () => {
             setEstudianteSeleccionado(null);
           }}
           userId={user?.id || '1'}
+          estudiantes={estudiantes}
         />
+      )}
+      </>
       )}
     </div>
   );
@@ -279,6 +295,7 @@ interface CalificacionModalProps {
   onClose: () => void;
   onSave: (calificacion: Calificacion) => void;
   userId: string;
+  estudiantes: Estudiante[];
 }
 
 const CalificacionModal: React.FC<CalificacionModalProps> = ({
@@ -289,8 +306,9 @@ const CalificacionModal: React.FC<CalificacionModalProps> = ({
   onClose,
   onSave,
   userId,
+  estudiantes,
 }) => {
-  const estudiante = estudiantes.find((e) => e.id === estudianteId);
+  const estudiante = estudiantes.find((e: Estudiante) => e.id === estudianteId) as Estudiante;
   const dimensiones: Dimension[] = [
     'Cognitiva',
     'Comunicativa',
