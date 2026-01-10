@@ -6,7 +6,6 @@ const app = express();
 
 // Middleware CORS - CORREGIDO para permitir ambos puertos
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true
 }));
 
