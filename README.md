@@ -30,7 +30,7 @@ Sistema completo de gestión escolar desarrollado con React, TypeScript, Vite y 
 - Caminadores (1-2 años)
 - Prejardín (2-3 años)
 - Jardín (3-4 años)
-- Transición (4-5 años)
+- Párvulos (4-5 años)
 
 ## Tecnologías Utilizadas
 

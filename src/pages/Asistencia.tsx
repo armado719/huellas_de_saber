@@ -32,7 +32,7 @@ const Asistencia: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.rol === 'admin';
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Transición');
+  const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Párvulos');
   const [asistencias, setAsistencias] = useState<AsistenciaRegistro[]>([]);
   const [estudiantes, setEstudiantes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +85,7 @@ const Asistencia: React.FC = () => {
     aprobada: false,
   });
 
-  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
+  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín'];
 
   const estudiantesDelNivel = estudiantes.filter(
     (est) => est.nivel === nivelSeleccionado && est.activo

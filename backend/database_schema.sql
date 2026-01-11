@@ -80,7 +80,7 @@ CREATE TABLE profesores (
   hoja_vida TEXT,
 
   -- Asignación
-  niveles JSON, -- Array de niveles: ["Transición", "Jardín"]
+  niveles JSON, -- Array de niveles: ["Párvulos", "Jardín"]
   es_titular BOOLEAN DEFAULT FALSE,
 
   -- Otros
@@ -107,7 +107,7 @@ CREATE TABLE estudiantes (
   apellidos VARCHAR(200) NOT NULL,
   fecha_nacimiento DATE NOT NULL,
   genero ENUM('Masculino', 'Femenino'),
-  nivel ENUM('Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición') NOT NULL,
+  nivel ENUM('Caminadores', 'Párvulos', 'Prejardín', 'Jardín') NOT NULL,
   estado ENUM('Activo', 'Retirado', 'Graduado', 'Suspendido') DEFAULT 'Activo',
   foto TEXT,
 
@@ -251,7 +251,7 @@ CREATE TABLE calificaciones_detalle (
 -- ========================================
 CREATE TABLE horarios (
   id VARCHAR(50) PRIMARY KEY,
-  nivel ENUM('Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición') NOT NULL,
+  nivel ENUM('Caminadores', 'Párvulos', 'Prejardín', 'Jardín') NOT NULL,
   dia_semana TINYINT NOT NULL CHECK (dia_semana BETWEEN 1 AND 5),
   hora_inicio TIME NOT NULL,
   hora_fin TIME NOT NULL,

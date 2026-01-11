@@ -8,7 +8,7 @@ export interface User {
   foto?: string;
 }
 
-export type Nivel = 'Caminadores' | 'Párvulos' | 'Prejardín' | 'Jardín' | 'Transición';
+export type Nivel = 'Caminadores' | 'Párvulos' | 'Prejardín' | 'Jardín' | 'Párvulos';
 
 export type Periodo = 1 | 2 | 3 | 4;
 

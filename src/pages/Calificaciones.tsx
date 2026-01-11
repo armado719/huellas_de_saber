@@ -14,7 +14,7 @@ import { Calificacion, CalificacionDetalle, Dimension, Estudiante, Nivel, Period
 const Calificaciones: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Transición');
+  const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Párvulos');
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<Periodo>(1);
   const [añoSeleccionado, setAñoSeleccionado] = useState(2024);
   const [showModal, setShowModal] = useState(false);
@@ -42,7 +42,7 @@ const Calificaciones: React.FC = () => {
     }
   };
 
-  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
+  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín'];
   const dimensiones: Dimension[] = [
     'Cognitiva',
     'Comunicativa',

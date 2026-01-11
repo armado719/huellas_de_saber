@@ -1,36 +1,36 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import {
-  AlertCircle,
-  Calendar,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Edit,
-  Eye,
-  FileDown,
-  MapPin,
-  Plus,
-  Printer,
-  Users,
-  X,
+    AlertCircle,
+    Calendar,
+    CalendarDays,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Edit,
+    Eye,
+    FileDown,
+    MapPin,
+    Plus,
+    Printer,
+    Users,
+    X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { horariosService } from '../services/horariosService';
 import { profesoresService } from '../services/profesoresService';
 import {
-  DiaSemana,
-  EventoCalendario,
-  Horario,
-  Nivel,
-  PrioridadEvento,
-  TipoActividad,
-  TipoEvento,
+    DiaSemana,
+    EventoCalendario,
+    Horario,
+    Nivel,
+    PrioridadEvento,
+    TipoActividad,
+    TipoEvento,
 } from '../types';
 
 const Horarios: React.FC = () => {
-  const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Transición');
+  const [nivelSeleccionado, setNivelSeleccionado] = useState<Nivel>('Párvulos');
   const [viestaCompacta, setVistaCompacta] = useState(false);
   const [mostrarModalClase, setMostrarModalClase] = useState(false);
   const [mostrarModalEvento, setMostrarModalEvento] = useState(false);
@@ -44,7 +44,7 @@ const Horarios: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const horarioRef = useRef<HTMLDivElement>(null);
 
-  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
+  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Párvulos'];
   const diasSemana: DiaSemana[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
   // Cargar datos reales desde el backend
@@ -765,7 +765,7 @@ const Horarios: React.FC = () => {
                       type="text"
                       name="aula"
                       defaultValue={claseEditando?.aula || ''}
-                      placeholder="Ej: Salón Transición, Cancha..."
+                      placeholder="Ej: Salón Párvulos, Cancha..."
                       className="input-field"
                     />
                   </div>

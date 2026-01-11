@@ -78,7 +78,6 @@ const Recursos: React.FC = () => {
     'Párvulos',
     'Prejardín',
     'Jardín',
-    'Transición',
     'Todos los niveles',
     'Solo Profesores',
   ];
@@ -167,8 +166,6 @@ const Recursos: React.FC = () => {
         return 'bg-blue-100 text-blue-700';
       case 'Jardín':
         return 'bg-green-100 text-green-700';
-      case 'Transición':
-        return 'bg-orange-100 text-orange-700';
       case 'Todos los niveles':
         return 'bg-primary/10 text-primary';
       case 'Solo Profesores':

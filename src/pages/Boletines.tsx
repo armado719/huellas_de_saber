@@ -72,7 +72,7 @@ const Boletines: React.FC = () => {
   const [boletinPreview, setBoletinPreview] = useState<Boletin | null>(null);
   const boletinRef = useRef<HTMLDivElement>(null);
 
-  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
+  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín'];
 
   const estudiantesDelNivel = mockEstudiantes.filter(
     (est) =>

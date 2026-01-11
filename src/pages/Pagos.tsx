@@ -921,7 +921,6 @@ const Pagos: React.FC = () => {
               <option value="Párvulos">Párvulos</option>
               <option value="Prejardín">Prejardín</option>
               <option value="Jardín">Jardín</option>
-              <option value="Transición">Transición</option>
             </select>
           </div>
 
@@ -1275,7 +1274,6 @@ const Pagos: React.FC = () => {
                     <option value="Párvulos">Párvulos</option>
                     <option value="Prejardín">Prejardín</option>
                     <option value="Jardín">Jardín</option>
-                    <option value="Transición">Transición</option>
                   </select>
                 </div>
 

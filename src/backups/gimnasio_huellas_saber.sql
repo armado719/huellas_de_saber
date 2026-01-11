@@ -307,7 +307,7 @@ CREATE TABLE `eventos_calendario` (
 CREATE TABLE `grupos` (
   `id` int(11) NOT NULL,
   `nombre` varchar(50) NOT NULL,
-  `nivel` enum('caminadores','parvulos','prejardin','jardin','transicion') NOT NULL,
+  `nivel` enum('caminadores','parvulos','prejardin','jardin') NOT NULL,
   `edad_minima` int(11) NOT NULL CHECK (`edad_minima` >= 1 and `edad_minima` <= 5),
   `edad_maxima` int(11) NOT NULL CHECK (`edad_maxima` >= 1 and `edad_maxima` <= 5),
   `cupo_maximo` int(11) NOT NULL DEFAULT 20,
@@ -324,8 +324,7 @@ INSERT INTO `grupos` (`id`, `nombre`, `nivel`, `edad_minima`, `edad_maxima`, `cu
 (1, 'Caminadores A', 'caminadores', 1, 2, 15, 2025, 1, '2025-11-16 03:58:20'),
 (2, 'Prejardín A', 'prejardin', 2, 3, 20, 2025, 1, '2025-11-16 03:58:20'),
 (3, 'Jardín A', 'jardin', 3, 4, 20, 2025, 1, '2025-11-16 03:58:20'),
-(4, 'Transición A', 'transicion', 4, 5, 25, 2025, 1, '2025-11-16 03:58:20'),
-(5, 'Párvulos A', 'parvulos', 2, 3, 20, 2025, 1, '2025-11-17 03:07:30');
+(4, 'Párvulos A', 'parvulos', 4, 5, 25, 2025, 1, '2025-11-16 03:58:20');
 
 -- --------------------------------------------------------
 

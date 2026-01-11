@@ -317,7 +317,7 @@ const ProfesorModal: React.FC<ProfesorModalProps> = ({
 }) => {
   const { user } = useAuth();
   const isAdmin = user?.rol === 'admin';
-  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
+  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín'];
   const [activeTab, setActiveTab] = useState<'personal' | 'formacion' | 'laboral'>('personal');
   
   // Estado para manejar errores de validación

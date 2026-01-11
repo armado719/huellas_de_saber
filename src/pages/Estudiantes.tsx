@@ -36,7 +36,7 @@ const Estudiantes: React.FC = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedEstudiante, setSelectedEstudiante] = useState<Estudiante | null>(null);
 
-  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Transición'];
+  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín'];
 
   // Cargar estudiantes al montar el componente
   useEffect(() => {
@@ -195,83 +195,82 @@ const Estudiantes: React.FC = () => {
             </thead>
             <tbody>
               {filteredEstudiantes.map((estudiante) => (
-              <tr
-                key={estudiante.id}
-                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-              >
-                <td className="py-3 px-4 font-mono text-sm font-semibold text-primary">
-                  {estudiante.codigo || estudiante.id}
-                </td>
-                <td className="py-3 px-4">
-                  <div className="font-semibold text-gray-800">
-                    {estudiante.nombres} {estudiante.apellidos}
-                  </div>
-                  {estudiante.numeroIdentificacion && (
-                    <div className="text-xs text-gray-500">
-                      {estudiante.tipoIdentificacion}: {estudiante.numeroIdentificacion}
+                <tr
+                  key={estudiante.id}
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                >
+                  <td className="py-3 px-4 font-mono text-sm font-semibold text-primary">
+                    {estudiante.codigo || estudiante.id}
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="font-semibold text-gray-800">
+                      {estudiante.nombres} {estudiante.apellidos}
                     </div>
-                  )}
-                </td>
-                <td className="py-3 px-4">
-                  {calcularEdad(estudiante.fechaNacimiento)} años
-                </td>
-                <td className="py-3 px-4">
-                  <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                    {estudiante.nivel}
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span className="text-sm text-gray-600">
-                    {estudiante.acudientes.length} acudiente(s)
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    estudiante.estado === 'Activo' ? 'bg-green-100 text-green-700' :
-                    estudiante.estado === 'Retirado' ? 'bg-red-100 text-red-700' :
-                    estudiante.estado === 'Graduado' ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {estudiante.estado || 'Activo'}
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <div className="flex justify-center space-x-2">
-                    <button
-                      onClick={() => handleView(estudiante)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Ver detalles"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(estudiante)}
-                      className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                      title="Editar"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(estudiante.id)}
-                      className="p-2 text-secondary hover:bg-red-50 rounded-lg transition-colors"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    {estudiante.numeroIdentificacion && (
+                      <div className="text-xs text-gray-500">
+                        {estudiante.tipoIdentificacion}: {estudiante.numeroIdentificacion}
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-3 px-4">
+                    {calcularEdad(estudiante.fechaNacimiento)} años
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                      {estudiante.nivel}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className="text-sm text-gray-600">
+                      {estudiante.acudientes.length} acudiente(s)
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${estudiante.estado === 'Activo' ? 'bg-green-100 text-green-700' :
+                        estudiante.estado === 'Retirado' ? 'bg-red-100 text-red-700' :
+                          estudiante.estado === 'Graduado' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                      }`}>
+                      {estudiante.estado || 'Activo'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex justify-center space-x-2">
+                      <button
+                        onClick={() => handleView(estudiante)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Ver detalles"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(estudiante)}
+                        className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        title="Editar"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(estudiante.id)}
+                        className="p-2 text-secondary hover:bg-red-50 rounded-lg transition-colors"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        {filteredEstudiantes.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No se encontraron estudiantes</p>
-          </div>
-        )}
-      </div>
+          {filteredEstudiantes.length === 0 && (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No se encontraron estudiantes</p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Modal */}
@@ -455,7 +454,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
         tabErrors.push('acudientes');
         break;
     }
-    
+
     setErrors(prev => {
       const newErrors = { ...prev };
       tabErrors.forEach(key => delete newErrors[key]);
@@ -527,7 +526,7 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
 
   const handleAddAcudiente = () => {
     const acudienteErrors: Record<string, string> = {};
-    
+
     if (!acudienteData.nombres) {
       acudienteErrors.acudienteNombres = 'El nombre del acudiente es obligatorio';
     }
@@ -647,11 +646,10 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`modal-tab ${
-                      activeTab === tab.id
+                    className={`modal-tab ${activeTab === tab.id
                         ? 'modal-tab-active'
                         : 'modal-tab-inactive'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{tab.label}</span>
@@ -888,9 +886,9 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     disabled={isViewMode}
                   >
                     <option value="Caminadores">Caminadores</option>
+                    <option value="Párvulos">Párvulos</option>
                     <option value="Prejardín">Prejardín</option>
                     <option value="Jardín">Jardín</option>
-                    <option value="Transición">Transición</option>
                   </select>
                 </div>
 
@@ -1574,9 +1572,8 @@ const EstudianteModal: React.FC<EstudianteModalProps> = ({
                     return (
                       <div
                         key={tab.id}
-                        className={`w-2 h-2 rounded-full ${
-                          isCompleted || isCurrent ? 'bg-primary' : 'bg-gray-300'
-                        }`}
+                        className={`w-2 h-2 rounded-full ${isCompleted || isCurrent ? 'bg-primary' : 'bg-gray-300'
+                          }`}
                         title={tab.label}
                       />
                     );
