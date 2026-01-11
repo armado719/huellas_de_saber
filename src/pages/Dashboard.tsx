@@ -1,10 +1,10 @@
 import {
-    AlertCircle,
-    Calendar,
-    TrendingDown,
-    TrendingUp,
-    UserCheck,
-    Users,
+  AlertCircle,
+  Calendar,
+  TrendingDown,
+  TrendingUp,
+  UserCheck,
+  Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { estudiantesService } from '../services/estudiantesService';
@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
   // TODO: Implementar cuando el endpoint de asistencia esté listo
   const porcentajeAsistencia = 0;
 
-  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín', 'Párvulos'];
+  const niveles: Nivel[] = ['Caminadores', 'Párvulos', 'Prejardín', 'Jardín'];
 
   return (
     <div className="space-y-6">
